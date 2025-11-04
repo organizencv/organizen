@@ -30,7 +30,9 @@ import {
   FileText,
   UserPlus,
   Palette,
-  Settings
+  Settings,
+  ArrowLeft,
+  ChevronLeft
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { UserAvatar } from './user-avatar';
@@ -193,11 +195,26 @@ export function Navigation() {
 
       {/* Navigation */}
       <nav className={cn(
-        "fixed left-0 top-0 h-full w-72 bg-card shadow-lg border-r border-border transform transition-transform duration-200 ease-in-out z-40 flex flex-col",
+        "fixed left-0 top-0 h-full w-72 bg-card shadow-lg border-r border-border transform transition-transform duration-200 ease-in-out z-40 flex flex-col text-base",
         mobileMenuOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"
       )}>
         {/* Header fixo */}
         <div className="p-6 border-b border-border flex-shrink-0">
+          {/* Botão Voltar para PWA */}
+          {pathname !== '/dashboard' && (
+            <div className="mb-3">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => router.back()}
+                className="gap-2 text-muted-foreground hover:text-foreground"
+              >
+                <ChevronLeft className="h-4 w-4" />
+                {language === 'pt' ? 'Voltar' : 'Back'}
+              </Button>
+            </div>
+          )}
+          
           <div className="flex items-center justify-between">
             <div 
               className="cursor-pointer flex-1"
