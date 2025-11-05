@@ -72,21 +72,14 @@ export function ProfilePhotoUploader({ onPhotoUpdate }: ProfilePhotoUploaderProp
       // Atualizar estado local imediatamente
       setPhotoKey(data.photoUrl);
 
-      // Atualizar sessão do NextAuth
-      await update({
-        user: {
-          ...session?.user,
-          image: data.photoUrl
-        }
-      });
-
       // Chamar callback se fornecido
       onPhotoUpdate?.(data.photoUrl);
       
-      // Revalidar dados do servidor sem reload completo
-      router.refresh();
-      
       toast.success('Foto de perfil atualizada!');
+      
+      // Atualizar sessão e revalidar - fazer em sequência
+      await update();
+      router.refresh();
     } catch (error) {
       console.error('Erro ao fazer upload:', error);
       toast.error('Erro ao fazer upload da foto');
@@ -115,21 +108,14 @@ export function ProfilePhotoUploader({ onPhotoUpdate }: ProfilePhotoUploaderProp
       // Atualizar estado local imediatamente
       setPhotoKey(null);
 
-      // Atualizar sessão do NextAuth
-      await update({
-        user: {
-          ...session?.user,
-          image: null
-        }
-      });
-
       // Chamar callback se fornecido
       onPhotoUpdate?.(null);
       
-      // Revalidar dados do servidor sem reload completo
-      router.refresh();
-      
       toast.success('Foto de perfil removida');
+      
+      // Atualizar sessão e revalidar - fazer em sequência
+      await update();
+      router.refresh();
     } catch (error) {
       console.error('Erro ao remover foto:', error);
       toast.error('Erro ao remover foto');
