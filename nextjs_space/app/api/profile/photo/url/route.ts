@@ -62,10 +62,12 @@ export async function GET(req: NextRequest) {
     const contentType = response.ContentType || 'image/jpeg';
 
     // Retornar imagem diretamente
+    // Cache por 1 hora mas permite revalidação
     return new NextResponse(buffer, {
       headers: {
         'Content-Type': contentType,
-        'Cache-Control': 'public, max-age=31536000, immutable',
+        'Cache-Control': 'public, max-age=3600, must-revalidate',
+        'ETag': user.image, // Usar o path S3 como ETag
       },
     });
   } catch (error) {

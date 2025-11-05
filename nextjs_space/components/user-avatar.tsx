@@ -53,8 +53,9 @@ export function UserAvatar({ user, size = 'md', className = '', publicMode = fal
 
   // Construir URL da imagem se existir
   // Em modo público (ex: página de login), não fazer requisições à API
+  // Adicionar timestamp como cache-buster para forçar reload quando a imagem mudar
   const imageUrl = !publicMode && user?.image && user?.id 
-    ? `/api/profile/photo/url?userId=${user.id}` 
+    ? `/api/profile/photo/url?userId=${user.id}&v=${encodeURIComponent(user.image.substring(user.image.lastIndexOf('-') + 1))}` 
     : null;
 
   return (
