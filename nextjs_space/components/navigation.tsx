@@ -195,7 +195,7 @@ export function Navigation() {
 
       {/* Navigation */}
       <nav className={cn(
-        "fixed left-0 top-0 h-full w-72 bg-card shadow-lg border-r border-border transform transition-transform duration-200 ease-in-out z-40 flex flex-col text-base",
+        "fixed left-0 top-0 h-full w-80 bg-card shadow-lg border-r border-border transform transition-transform duration-200 ease-in-out z-40 flex flex-col text-base",
         mobileMenuOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"
       )}>
         {/* Header fixo */}
