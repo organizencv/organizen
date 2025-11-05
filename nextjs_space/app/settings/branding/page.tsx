@@ -17,6 +17,7 @@ import { ColorPicker } from '@/components/branding/color-picker';
 import { BrandingPreview } from '@/components/branding/branding-preview';
 import { Textarea } from '@/components/ui/textarea';
 import { Save, RotateCcw, Loader2, AlertTriangle, Sparkles, Mail, ArrowRight } from 'lucide-react';
+import { BackButton } from '@/components/back-button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import Link from 'next/link';
 
@@ -197,6 +198,9 @@ export default function BrandingPage() {
     <div className="space-y-6">
       {/* Header */}
       <div>
+        <div className="mb-3">
+          <BackButton fallbackRoute="/settings" variant="ghost" />
+        </div>
         <div className="flex items-center gap-2 mb-2">
           <Sparkles className="h-6 w-6 text-primary" />
           <h1 className="text-3xl font-bold">Branding Corporativo</h1>

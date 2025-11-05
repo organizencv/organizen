@@ -10,6 +10,7 @@ import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { BarChart, Bar, LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { CalendarIcon, Download, TrendingUp, Users, MessageSquare, Calendar as CalendarIconLucide, CheckCircle2, Clock } from 'lucide-react';
+import { BackButton } from './back-button';
 import { format } from 'date-fns';
 import { ptBR, enUS } from 'date-fns/locale';
 import { getTranslation } from '@/lib/i18n';
@@ -125,6 +126,9 @@ export default function ReportsContent() {
       {/* Header */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
+          <div className="flex items-center gap-3 mb-2">
+            <BackButton fallbackRoute="/dashboard" variant="ghost" />
+          </div>
           <h1 className="text-3xl font-bold">{t('reports')}</h1>
           <p className="text-muted-foreground">{t('reportsDesc')}</p>
         </div>

@@ -4,6 +4,7 @@
 import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { Loader2, AlertTriangle, Mail } from 'lucide-react';
+import { BackButton } from '@/components/back-button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useToast } from '@/hooks/use-toast';
 import EmailTemplateEditor from '@/components/branding/EmailTemplateEditor';
@@ -91,6 +92,9 @@ export default function EmailTemplatesPage() {
       {/* Header */}
       <div>
         <div className="flex items-center gap-2 mb-2">
+        <div className="mb-3">
+          <BackButton fallbackRoute="/settings" variant="ghost" />
+        </div>
           <Mail className="h-6 w-6 text-primary" />
           <h1 className="text-3xl font-bold">Templates de Email</h1>
         </div>

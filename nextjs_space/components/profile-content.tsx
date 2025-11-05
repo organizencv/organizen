@@ -12,6 +12,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { getTranslation, Language } from '@/lib/i18n';
 import { User, Building2, Calendar, Loader2, Briefcase, Phone, MapPin, CreditCard, UserCircle, AlertCircle } from 'lucide-react';
+import { BackButton } from './back-button';
 import { useToast } from '@/hooks/use-toast';
 import { motion } from 'framer-motion';
 import { ProfilePhotoUploader } from './profile-photo-uploader';
@@ -294,6 +295,9 @@ export function ProfileContent({ user: initialUser }: ProfileContentProps) {
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
+          <div className="flex items-center gap-3 mb-2">
+            <BackButton fallbackRoute="/dashboard" variant="ghost" />
+          </div>
           <h1 className="text-3xl font-bold text-foreground flex items-center gap-3">
             <User className="h-8 w-8 text-primary" />
             {getTranslation('profile', language)}

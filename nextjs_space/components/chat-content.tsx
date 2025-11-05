@@ -15,6 +15,7 @@ import { useToast } from '@/hooks/use-toast';
 import { motion, AnimatePresence } from 'framer-motion';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
+import { BackButton } from './back-button';
 
 interface User {
   id: string;
@@ -292,7 +293,10 @@ export function ChatContent({ users, currentUserId, currentUserName, openUserId 
   return (
     <div className="h-[calc(100vh-8rem)]">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
-        <div>
+        <div className="w-full">
+          <div className="flex items-center gap-3 mb-2">
+            <BackButton fallbackRoute="/dashboard" variant="ghost" />
+          </div>
           <h1 className="text-3xl font-bold text-foreground flex items-center gap-3">
             <MessageCircle className="h-8 w-8 text-primary" />
             {getTranslation('chat', language)}

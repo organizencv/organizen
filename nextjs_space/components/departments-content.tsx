@@ -11,6 +11,7 @@ import { DepartmentModal } from './department-modal';
 import { SortableList } from './ui/sortable-list';
 import { getTranslation, Language } from '@/lib/i18n';
 import { Plus, Search, Building2, Edit, Trash2, Users } from 'lucide-react';
+import { BackButton } from './back-button';
 import { useToast } from '@/hooks/use-toast';
 import { motion } from 'framer-motion';
 
@@ -242,6 +243,9 @@ export function DepartmentsContent({ departments: initialDepartments, userRole, 
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
+          <div className="flex items-center gap-3 mb-2">
+            <BackButton fallbackRoute="/dashboard" variant="ghost" />
+          </div>
           <h1 className="text-3xl font-bold text-foreground flex items-center gap-3">
             <Building2 className="h-8 w-8 text-primary" />
             {getTranslation('departments', language)}

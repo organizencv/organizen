@@ -19,6 +19,7 @@ import {
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { pt, enUS, es, fr, type Locale } from 'date-fns/locale';
+import { BackButton } from '@/components/back-button';
 
 interface ActiveSession {
   id: string;
@@ -184,6 +185,9 @@ export default function SessionsPage() {
   return (
     <div className="container mx-auto py-8 px-4 max-w-5xl">
       <div className="mb-6">
+        <div className="mb-3">
+          <BackButton fallbackRoute="/settings" variant="ghost" />
+        </div>
         <h1 className="text-3xl font-bold mb-2">Sessões Ativas</h1>
         <p className="text-muted-foreground">
           Gerencie as sessões ativas da sua conta. Você pode encerrar sessões suspeitas ou antigas.

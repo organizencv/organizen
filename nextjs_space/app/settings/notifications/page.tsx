@@ -11,6 +11,7 @@ import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { toast } from 'sonner';
 import { Bell, Mail, TestTube } from 'lucide-react';
+import { BackButton } from '@/components/back-button';
 import { PushNotificationManager } from '@/components/push-notification-manager';
 
 interface NotificationPreferences {
@@ -138,6 +139,9 @@ export default function NotificationsSettingsPage() {
 
   return (
     <div className="container mx-auto py-6 space-y-6">
+        <div className="mb-3">
+          <BackButton fallbackRoute="/settings" variant="ghost" />
+        </div>
       <div>
         <h1 className="text-3xl font-bold">Notificações</h1>
         <p className="text-muted-foreground">

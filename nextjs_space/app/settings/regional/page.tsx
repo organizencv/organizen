@@ -15,6 +15,7 @@ import { TimeFormatSelector } from '@/components/settings/TimeFormatSelector';
 import { FirstDaySelector } from '@/components/settings/FirstDaySelector';
 import { CurrencySelector } from '@/components/settings/CurrencySelector';
 import { Globe, AlertCircle, CheckCircle2, Loader2 } from 'lucide-react';
+import { BackButton } from '@/components/back-button';
 import { toast } from 'sonner';
 import { useLanguage } from '@/hooks/use-language';
 import { getTranslation } from '@/lib/i18n';
@@ -152,6 +153,9 @@ export default function RegionalSettingsPage() {
     <div className="space-y-6">
       {/* Header */}
       <div>
+        <div className="mb-3">
+          <BackButton fallbackRoute="/settings" variant="ghost" />
+        </div>
         <div className="flex items-center gap-3 mb-2">
           <Globe className="h-8 w-8 text-primary" />
           <h1 className="text-3xl font-bold">{t('regionalSettingsTitle')}</h1>

@@ -14,6 +14,7 @@ import { UserDetailsModal } from './user-details-modal';
 import { ResetPasswordModal } from './reset-password-modal';
 import { getTranslation, Language } from '@/lib/i18n';
 import { Plus, Search, Users as UsersIcon, Edit, Trash2, Filter, Building2, Briefcase, KeyRound, Eye } from 'lucide-react';
+import { BackButton } from './back-button';
 import { useToast } from '@/hooks/use-toast';
 import { motion } from 'framer-motion';
 
@@ -308,6 +309,9 @@ export function UsersContent({ users: initialUsers, departments, teams, userRole
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
+          <div className="flex items-center gap-3 mb-2">
+            <BackButton fallbackRoute="/dashboard" variant="ghost" />
+          </div>
           <h1 className="text-3xl font-bold flex items-center gap-3">
             <UsersIcon className="h-8 w-8" />
             {getTranslation('users', language)}

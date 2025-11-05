@@ -7,10 +7,14 @@ import { EventTypeManager } from "@/components/settings/EventTypeManager";
 import { ShiftTemplateManager } from "@/components/settings/ShiftTemplateManager";
 import { HolidayManager } from "@/components/settings/HolidayManager";
 import { Calendar, Clock, Sparkles } from "lucide-react";
+import { BackButton } from '@/components/back-button';
 
 export default function CalendarSettingsPage() {
   return (
     <div className="space-y-8">
+        <div className="mb-3">
+          <BackButton fallbackRoute="/settings" variant="ghost" />
+        </div>
       <div>
         <h1 className="text-3xl font-bold">Calendário e Turnos</h1>
         <p className="text-muted-foreground mt-2">

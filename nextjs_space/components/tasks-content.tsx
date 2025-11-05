@@ -14,6 +14,7 @@ import { TaskDetailsModal } from './task-details-modal';
 import { SortableList } from './ui/sortable-list';
 import { getTranslation, Language } from '@/lib/i18n';
 import { Plus, Search, CheckSquare, Edit, Trash2, User, Calendar, Clock, AlertCircle, MessageSquare, Paperclip, Tag, ListChecks } from 'lucide-react';
+import { BackButton } from './back-button';
 import { useToast } from '@/hooks/use-toast';
 import { motion } from 'framer-motion';
 import { format } from 'date-fns';
@@ -495,6 +496,9 @@ export function TasksContent({ tasks: initialTasks, users, userRole, currentUser
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
+          <div className="flex items-center gap-3 mb-2">
+            <BackButton fallbackRoute="/dashboard" variant="ghost" />
+          </div>
           <h1 className="text-3xl font-bold flex items-center gap-3">
             <CheckSquare className="h-8 w-8" />
             {getTranslation('tasks', language)}

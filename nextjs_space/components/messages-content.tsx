@@ -17,6 +17,7 @@ import { Plus, Search, MessageSquare, User, Clock, Eye, Send, Inbox, Archive, Tr
 import { useToast } from '@/hooks/use-toast';
 import { motion } from 'framer-motion';
 import { format } from 'date-fns';
+import { BackButton } from './back-button';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -662,6 +663,9 @@ export function MessagesContent({
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
+          <div className="flex items-center gap-3 mb-2">
+            <BackButton fallbackRoute="/dashboard" variant="ghost" />
+          </div>
           <h1 className="text-3xl font-bold text-foreground flex items-center gap-3">
             <MessageSquare className="h-8 w-8 text-primary" />
             {getTranslation('messages', language)}

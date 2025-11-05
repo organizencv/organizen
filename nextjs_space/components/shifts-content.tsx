@@ -12,6 +12,7 @@ import { ShiftModal } from './shift-modal';
 import { SortableList } from './ui/sortable-list';
 import { getTranslation, Language } from '@/lib/i18n';
 import { Plus, Search, Clock, Calendar, Edit, Trash2, User } from 'lucide-react';
+import { BackButton } from './back-button';
 import { useToast } from '@/hooks/use-toast';
 import { motion } from 'framer-motion';
 import { format } from 'date-fns';
@@ -265,6 +266,9 @@ export function ShiftsContent({ shifts: initialShifts, users, userRole, currentU
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
+          <div className="flex items-center gap-3 mb-2">
+            <BackButton fallbackRoute="/dashboard" variant="ghost" />
+          </div>
           <h1 className="text-3xl font-bold text-foreground flex items-center gap-3">
             <Clock className="h-8 w-8 text-primary" />
             {getTranslation('shifts', language)}

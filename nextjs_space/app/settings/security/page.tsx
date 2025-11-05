@@ -16,6 +16,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, Shield, Lock, Clock, UserCheck, Eye, EyeOff, CheckCircle2, XCircle, AlertTriangle } from 'lucide-react';
+import { BackButton } from '@/components/back-button';
 
 interface SecuritySettings {
   id: string;
@@ -150,6 +151,9 @@ export default function SecuritySettingsPage() {
   return (
     <div className="space-y-6">
       <div>
+        <div className="flex items-center gap-3 mb-3">
+          <BackButton fallbackRoute="/settings" variant="ghost" />
+        </div>
         <h2 className="text-2xl font-bold flex items-center gap-2">
           <Shield className="h-6 w-6 text-primary" />
           Configurações de Segurança

@@ -10,6 +10,7 @@ import { FaviconUploader } from '@/components/settings/FaviconUploader';
 import { PwaIconUploader } from '@/components/settings/PwaIconUploader';
 import { Skeleton } from '@/components/ui/skeleton';
 import { AlertCircle, Building2, Clock, Image } from 'lucide-react';
+import { BackButton } from '@/components/back-button';
 
 interface CompanyData {
   id: string;
@@ -84,6 +85,9 @@ export default function CompanySettingsPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
+        <div className="mb-3">
+          <BackButton fallbackRoute="/settings" variant="ghost" />
+        </div>
       <div>
         <h1 className="text-3xl font-bold tracking-tight">Informações da Empresa</h1>
         <p className="text-muted-foreground mt-2">
