@@ -96,12 +96,16 @@ export class SessionManager {
    */
   static async updateActivity(sessionToken: string): Promise<void> {
     try {
-      await prisma.activeSession.update({
-        where: { sessionToken },
+      // Usar updateMany ao invés de update para evitar erro se a sessão não existir
+      await prisma.activeSession.updateMany({
+        where: { 
+          sessionToken,
+          expiresAt: { gt: new Date() } // Só atualiza se não estiver expirada
+        },
         data: { lastActivity: new Date() }
       });
     } catch (error) {
-      // Session might not exist yet, ignore
+      // Silently ignore errors (session might have been deleted)
     }
   }
 
