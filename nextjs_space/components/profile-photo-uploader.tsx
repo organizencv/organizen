@@ -1,11 +1,12 @@
 
 'use client';
 
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Camera, Trash2, Upload, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { UserAvatar } from '@/components/user-avatar';
 import { useSession } from 'next-auth/react';
+import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 
 interface ProfilePhotoUploaderProps {
@@ -14,10 +15,18 @@ interface ProfilePhotoUploaderProps {
 
 export function ProfilePhotoUploader({ onPhotoUpdate }: ProfilePhotoUploaderProps) {
   const { data: session, update } = useSession();
+  const router = useRouter();
   const [uploading, setUploading] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [photoKey, setPhotoKey] = useState<string | null>(session?.user?.image || null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Sincronizar photoKey com a sessão quando ela mudar
+  useEffect(() => {
+    if (session?.user?.image !== undefined) {
+      setPhotoKey(session.user.image);
+    }
+  }, [session?.user?.image]);
 
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -60,23 +69,24 @@ export function ProfilePhotoUploader({ onPhotoUpdate }: ProfilePhotoUploaderProp
         throw new Error(data.error || 'Erro ao fazer upload');
       }
 
-      // Guardar a chave S3
+      // Atualizar estado local imediatamente
       setPhotoKey(data.photoUrl);
 
-      // Atualizar sessão com a chave S3
+      // Atualizar sessão do NextAuth
       await update({
-        ...session,
         user: {
           ...session?.user,
           image: data.photoUrl
         }
       });
 
+      // Chamar callback se fornecido
       onPhotoUpdate?.(data.photoUrl);
-      toast.success('Foto de perfil atualizada!');
       
-      // Forçar reload da página para atualizar o avatar
-      window.location.reload();
+      // Revalidar dados do servidor sem reload completo
+      router.refresh();
+      
+      toast.success('Foto de perfil atualizada!');
     } catch (error) {
       console.error('Erro ao fazer upload:', error);
       toast.error('Erro ao fazer upload da foto');
@@ -102,22 +112,24 @@ export function ProfilePhotoUploader({ onPhotoUpdate }: ProfilePhotoUploaderProp
         throw new Error('Erro ao remover foto');
       }
 
+      // Atualizar estado local imediatamente
       setPhotoKey(null);
 
-      // Atualizar sessão
+      // Atualizar sessão do NextAuth
       await update({
-        ...session,
         user: {
           ...session?.user,
           image: null
         }
       });
 
+      // Chamar callback se fornecido
       onPhotoUpdate?.(null);
-      toast.success('Foto de perfil removida');
       
-      // Forçar reload da página para atualizar o avatar
-      window.location.reload();
+      // Revalidar dados do servidor sem reload completo
+      router.refresh();
+      
+      toast.success('Foto de perfil removida');
     } catch (error) {
       console.error('Erro ao remover foto:', error);
       toast.error('Erro ao remover foto');
