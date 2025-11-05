@@ -55,15 +55,24 @@ export function ProfilePhotoUploader({ onPhotoUpdate }: ProfilePhotoUploaderProp
   const uploadPhoto = async (file: File) => {
     setUploading(true);
     try {
+      console.log('Iniciando upload...', file.name, file.size);
       const formData = new FormData();
       formData.append('photo', file);
 
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 segundos
+
       const response = await fetch('/api/profile/photo', {
         method: 'POST',
-        body: formData
+        body: formData,
+        signal: controller.signal
       });
 
+      clearTimeout(timeoutId);
+      console.log('Response status:', response.status);
+
       const data = await response.json();
+      console.log('Response data:', data);
 
       if (!response.ok) {
         throw new Error(data.error || 'Erro ao fazer upload');
@@ -71,18 +80,26 @@ export function ProfilePhotoUploader({ onPhotoUpdate }: ProfilePhotoUploaderProp
 
       // Atualizar estado local imediatamente
       setPhotoKey(data.photoUrl);
-
-      // Chamar callback se fornecido
-      onPhotoUpdate?.(data.photoUrl);
       
       toast.success('Foto de perfil atualizada!');
       
-      // Atualizar sessão e revalidar - fazer em sequência
+      // Atualizar sessão - buscar dados frescos do servidor
       await update();
-      router.refresh();
-    } catch (error) {
-      console.error('Erro ao fazer upload:', error);
-      toast.error('Erro ao fazer upload da foto');
+      
+      // Chamar callback se fornecido
+      onPhotoUpdate?.(data.photoUrl);
+      
+      // Aguardar um pouco antes de revalidar
+      setTimeout(() => router.refresh(), 500);
+    } catch (error: any) {
+      console.error('Erro detalhado ao fazer upload:', error);
+      if (error.name === 'AbortError') {
+        toast.error('Upload demorou muito tempo. Tente com uma imagem menor.');
+      } else {
+        toast.error(error.message || 'Erro ao fazer upload da foto');
+      }
+      // Reverter para foto anterior em caso de erro
+      setPhotoKey(session?.user?.image || null);
     } finally {
       setUploading(false);
       // Limpar input
@@ -97,28 +114,37 @@ export function ProfilePhotoUploader({ onPhotoUpdate }: ProfilePhotoUploaderProp
 
     setDeleting(true);
     try {
+      console.log('Removendo foto...', photoKey);
+      
       const response = await fetch('/api/profile/photo', {
         method: 'DELETE'
       });
 
+      console.log('Delete response status:', response.status);
+
       if (!response.ok) {
-        throw new Error('Erro ao remover foto');
+        const data = await response.json();
+        throw new Error(data.error || 'Erro ao remover foto');
       }
 
       // Atualizar estado local imediatamente
       setPhotoKey(null);
-
-      // Chamar callback se fornecido
-      onPhotoUpdate?.(null);
       
       toast.success('Foto de perfil removida');
       
-      // Atualizar sessão e revalidar - fazer em sequência
+      // Atualizar sessão - buscar dados frescos do servidor
       await update();
-      router.refresh();
-    } catch (error) {
-      console.error('Erro ao remover foto:', error);
-      toast.error('Erro ao remover foto');
+      
+      // Chamar callback se fornecido
+      onPhotoUpdate?.(null);
+      
+      // Aguardar um pouco antes de revalidar
+      setTimeout(() => router.refresh(), 500);
+    } catch (error: any) {
+      console.error('Erro detalhado ao remover foto:', error);
+      toast.error(error.message || 'Erro ao remover foto');
+      // Reverter para foto anterior em caso de erro
+      setPhotoKey(session?.user?.image || null);
     } finally {
       setDeleting(false);
     }
