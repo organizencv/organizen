@@ -591,6 +591,7 @@ enum NotificationType {
   TIME_OFF
   MENTION
   REPORT
+  BIRTHDAY
 }
 
 // Chat em Tempo Real

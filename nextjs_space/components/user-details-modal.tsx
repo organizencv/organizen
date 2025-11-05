@@ -81,6 +81,14 @@ export function UserDetailsModal({ userId, onClose, language }: UserDetailsModal
   const [loading, setLoading] = useState(true);
   const [showImageModal, setShowImageModal] = useState(false);
 
+  // Verificar se hoje é aniversário
+  const isBirthdayToday = (birthDate: string | null | undefined) => {
+    if (!birthDate) return false;
+    const today = new Date();
+    const birth = new Date(birthDate);
+    return today.getMonth() === birth.getMonth() && today.getDate() === birth.getDate();
+  };
+
   useEffect(() => {
     fetchUserDetails();
   }, [userId]);
@@ -205,7 +213,14 @@ export function UserDetailsModal({ userId, onClose, language }: UserDetailsModal
               <UserAvatar user={user} size="xl" />
             </div>
             <div className="flex-1 space-y-2">
-              <h2 className="text-2xl font-bold">{user.name || user.email}</h2>
+              <div className="flex items-center gap-3 flex-wrap">
+                <h2 className="text-2xl font-bold">{user.name || user.email}</h2>
+                {isBirthdayToday(user.birthDate) && (
+                  <Badge className="text-base px-3 py-1 bg-gradient-to-r from-pink-500 to-yellow-500 text-white animate-pulse">
+                    🎂 {language === 'pt' ? 'Feliz Aniversário!' : 'Happy Birthday!'}
+                  </Badge>
+                )}
+              </div>
               <div className="flex flex-wrap gap-2">
                 <Badge className={getRoleBadgeColor(user.role)}>
                   {getRoleTranslation(user.role)}

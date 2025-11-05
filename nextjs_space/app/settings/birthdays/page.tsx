@@ -23,7 +23,7 @@ interface BirthdaySettings {
 }
 
 export default function BirthdaySettingsPage() {
-  const { language } = useLanguage();
+  const language = useLanguage();
   const { toast } = useToast();
   const [settings, setSettings] = useState<BirthdaySettings>({
     enabled: true,

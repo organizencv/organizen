@@ -117,6 +117,14 @@ export function ProfileContent({ user: initialUser }: ProfileContentProps) {
   
   const { toast } = useToast();
 
+  // Verificar se hoje é aniversário
+  const isBirthdayToday = () => {
+    if (!user.birthDate) return false;
+    const today = new Date();
+    const birth = new Date(user.birthDate);
+    return today.getMonth() === birth.getMonth() && today.getDate() === birth.getDate();
+  };
+
   useEffect(() => {
     // Primeiro tenta ler do localStorage (persistência local)
     const savedLanguage = localStorage.getItem('userLanguage') as Language;
@@ -301,6 +309,11 @@ export function ProfileContent({ user: initialUser }: ProfileContentProps) {
           <h1 className="text-3xl font-bold text-foreground flex items-center gap-3">
             <User className="h-8 w-8 text-primary" />
             {getTranslation('profile', language)}
+            {isBirthdayToday() && (
+              <Badge className="text-lg px-4 py-2 bg-gradient-to-r from-pink-500 to-yellow-500 text-white animate-pulse">
+                🎂 {language === 'pt' ? 'Feliz Aniversário!' : 'Happy Birthday!'}
+              </Badge>
+            )}
           </h1>
           <p className="text-muted-foreground mt-1">
             {language === 'pt' ? 'Gerir informações do perfil' : 'Manage profile information'}

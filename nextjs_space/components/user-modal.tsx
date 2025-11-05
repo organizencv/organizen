@@ -21,6 +21,7 @@ interface User {
   teamId?: string | null;
   department: { id: string; name: string } | null;
   team: { id: string; name: string } | null;
+  birthDate?: string | null;
 }
 
 interface Department {

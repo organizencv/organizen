@@ -1,9 +1,28 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
-import { sendNotification } from '@/lib/notification-service';
+import { NotificationType } from '@prisma/client';
 
 export const dynamic = "force-dynamic";
+
+// Função auxiliar para criar notificações
+async function sendNotification(
+  userId: string,
+  title: string,
+  message: string,
+  type: NotificationType,
+  relatedId?: string
+) {
+  await prisma.notification.create({
+    data: {
+      userId,
+      title,
+      message,
+      type,
+      relatedId: relatedId || null,
+    },
+  });
+}
 
 // Função para verificar se hoje é aniversário (ignora ano)
 function isBirthdayToday(birthDate: Date | null): boolean {
@@ -93,7 +112,7 @@ export async function GET(request: NextRequest) {
               birthdayUser.id,
               'Feliz Aniversário!',
               message,
-              'BIRTHDAY',
+              NotificationType.BIRTHDAY,
               birthdayUser.id
             );
             totalNotifications++;
@@ -116,7 +135,7 @@ export async function GET(request: NextRequest) {
                 member.id,
                 `🎂 Aniversário de ${birthdayUser.name}`,
                 `Hoje é aniversário de ${birthdayUser.name}! Não se esqueça de dar os parabéns! 🎉`,
-                'SYSTEM',
+                NotificationType.BIRTHDAY,
                 birthdayUser.id
               );
               totalNotifications++;
@@ -145,7 +164,7 @@ export async function GET(request: NextRequest) {
                 manager.id,
                 `🎂 Aniversário de ${birthdayUser.name}`,
                 `Hoje é aniversário de ${birthdayUser.name}${birthdayUser.department ? ` (${birthdayUser.department.name})` : ''}. Considere enviar uma mensagem! 🎉`,
-                'SYSTEM',
+                NotificationType.BIRTHDAY,
                 birthdayUser.id
               );
               totalNotifications++;
