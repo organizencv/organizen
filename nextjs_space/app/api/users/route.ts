@@ -53,7 +53,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { name, email, password, role, departmentId, teamId } = await request.json();
+    const { name, email, password, role, departmentId, teamId, birthDate } = await request.json();
 
     // Check if email already exists
     const existingUser = await prisma.user.findUnique({
@@ -86,6 +86,7 @@ export async function POST(request: NextRequest) {
         companyId: session.user.companyId,
         departmentId: departmentId || null,
         teamId: teamId || null,
+        birthDate: birthDate ? new Date(birthDate) : null,
       },
       include: {
         department: true,

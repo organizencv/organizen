@@ -203,7 +203,7 @@ export async function PUT(
       );
     }
 
-    const { name, email, role, departmentId, teamId } = await request.json();
+    const { name, email, role, departmentId, teamId, birthDate } = await request.json();
 
     // Get current user data to check if department or role is changing
     const currentUser = await prisma.user.findUnique({
@@ -347,6 +347,7 @@ export async function PUT(
       role,
       departmentId: departmentId || null,
       teamId: shouldRemoveFromTeam ? null : (teamId || null),
+      birthDate: birthDate ? new Date(birthDate) : null,
     };
 
     const user = await prisma.user.update({

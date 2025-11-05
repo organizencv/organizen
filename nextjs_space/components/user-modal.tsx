@@ -54,6 +54,7 @@ export function UserModal({ user, departments, teams, onClose, onSaved, language
     role: user?.role || 'STAFF',
     departmentId: 'no-department',
     teamId: 'no-team',
+    birthDate: '',
   });
   const { toast } = useToast();
 
@@ -67,6 +68,7 @@ export function UserModal({ user, departments, teams, onClose, onSaved, language
         role: user.role || 'STAFF',
         departmentId: user.departmentId || user.department?.id || 'no-department',
         teamId: user.teamId || user.team?.id || 'no-team',
+        birthDate: user.birthDate ? new Date(user.birthDate).toISOString().split('T')[0] : '',
       });
     } else {
       setFormData({
@@ -76,6 +78,7 @@ export function UserModal({ user, departments, teams, onClose, onSaved, language
         role: 'STAFF',
         departmentId: 'no-department',
         teamId: 'no-team',
+        birthDate: '',
       });
     }
   }, [user]);
@@ -237,6 +240,17 @@ export function UserModal({ user, departments, teams, onClose, onSaved, language
               onChange={(e) => handleChange('email', e.target.value)}
               required
               placeholder={language === 'pt' ? 'Email do utilizador' : 'User email'}
+            />
+          </div>
+
+          <div>
+            <Label htmlFor="birthDate">{language === 'pt' ? 'Data de Nascimento' : 'Birth Date'}</Label>
+            <Input
+              id="birthDate"
+              type="date"
+              value={formData.birthDate}
+              onChange={(e) => handleChange('birthDate', e.target.value)}
+              placeholder={language === 'pt' ? 'Data de nascimento' : 'Birth date'}
             />
           </div>
 

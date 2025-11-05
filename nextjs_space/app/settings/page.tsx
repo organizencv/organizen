@@ -22,7 +22,8 @@ import {
   Globe,
   Monitor,
   CheckSquare,
-  MessageSquare
+  MessageSquare,
+  Cake
 } from 'lucide-react';
 import Link from 'next/link';
 import { Badge } from '@/components/ui/badge';
@@ -105,6 +106,14 @@ export default function SettingsPage() {
       description: 'Gerir testemunhos e depoimentos de colaboradores',
       icon: MessageSquare,
       href: '/settings/testimonials',
+      available: true,
+    },
+    {
+      id: 'birthdays',
+      title: 'Aniversários',
+      description: 'Configurar celebrações automáticas de aniversários',
+      icon: Cake,
+      href: '/settings/birthdays',
       available: true,
     },
     {

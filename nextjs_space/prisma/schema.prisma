@@ -90,6 +90,7 @@ model Company {
   users            User[]
   branding          CompanyBranding?
   securitySettings  SecuritySettings?
+  birthdaySettings  BirthdaySettings?
   customTaskStatuses CustomTaskStatus[]
   customTaskTags     CustomTaskTag[]
   customTaskPriorities CustomTaskPriority[]
@@ -741,6 +742,34 @@ model SecuritySettings {
   updatedAt               DateTime @updatedAt
 
   @@map("security_settings")
+}
+
+model BirthdaySettings {
+  id                        String   @id @default(cuid())
+  companyId                 String   @unique
+  company                   Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  
+  // Ativação do sistema
+  enabled                   Boolean  @default(true)
+  
+  // Visibilidade dos aniversários
+  // ALL = Todos veem todos os aniversários
+  // SAME_DEPARTMENT = Apenas mesmo departamento
+  // MANAGERS_ONLY = Apenas gestores/supervisores/admin
+  visibility                String   @default("ALL") // ALL, SAME_DEPARTMENT, MANAGERS_ONLY
+  
+  // Notificações
+  notifyBirthdayPerson      Boolean  @default(true) // Notifica aniversariante
+  notifyTeamMembers         Boolean  @default(true) // Notifica equipa
+  notifyManagers            Boolean  @default(true) // Notifica gestores
+  
+  // Mensagem personalizada
+  customMessage             String?  // Mensagem de parabéns personalizada
+  
+  createdAt                 DateTime @default(now())
+  updatedAt                 DateTime @updatedAt
+
+  @@map("birthday_settings")
 }
 
 // ========================================
