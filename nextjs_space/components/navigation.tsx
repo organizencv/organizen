@@ -38,7 +38,7 @@ import { cn } from '@/lib/utils';
 import { UserAvatar } from './user-avatar';
 
 export function Navigation() {
-  // Version: 2024-10-19 - Força atualização de cache
+  // Version: 2024-11-05 - Sidebar width increased to w-80
   const { data: session, update } = useSession();
   const router = useRouter();
   const pathname = usePathname();
