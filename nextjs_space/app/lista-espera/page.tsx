@@ -27,6 +27,7 @@ import { toast } from 'react-hot-toast';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { SortableList } from '@/components/ui/sortable-list';
+import { BackButton } from '@/components/back-button';
 
 interface WaitingUser {
   id: string;
@@ -237,6 +238,7 @@ export default function ListaEsperaPage() {
 
   return (
     <div className="container mx-auto p-6 space-y-6">
+      <BackButton />
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>

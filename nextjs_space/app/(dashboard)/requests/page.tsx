@@ -11,6 +11,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Loader2, FileText, Clock, Calendar, Check, X, Trash2, Plus } from 'lucide-react';
 import { ShiftSwapDialog } from '@/components/requests/ShiftSwapDialog';
 import { TimeOffDialog } from '@/components/requests/TimeOffDialog';
+import { BackButton } from '@/components/back-button';
 import { toast } from 'react-hot-toast';
 import { format } from 'date-fns';
 import { ptBR, enUS } from 'date-fns/locale';
@@ -196,6 +197,7 @@ export default function RequestsPage() {
 
   return (
     <div className="p-4 sm:p-6 lg:p-8">
+      <BackButton />
       <div className="mb-6 sm:mb-8">
         <h1 className="text-2xl sm:text-3xl font-bold">{getTranslation('requests', language)}</h1>
         <p className="text-sm sm:text-base text-muted-foreground mt-2">

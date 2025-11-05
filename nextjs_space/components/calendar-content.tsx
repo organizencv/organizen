@@ -16,6 +16,7 @@ import {
 import { getTranslation, Language } from '@/lib/i18n';
 import CalendarView from '@/components/calendar-view';
 import EventModal from '@/components/event-modal';
+import { BackButton } from '@/components/back-button';
 import toast from 'react-hot-toast';
 
 type ViewType = 'month' | 'week' | 'day';
@@ -202,6 +203,7 @@ export default function CalendarContent() {
 
   return (
     <div className="space-y-6">
+      <BackButton />
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>

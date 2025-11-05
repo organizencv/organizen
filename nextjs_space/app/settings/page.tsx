@@ -27,6 +27,7 @@ import {
 import Link from 'next/link';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { BackButton } from '@/components/back-button';
 
 export default function SettingsPage() {
   const { data: session } = useSession() || {};
@@ -167,6 +168,7 @@ export default function SettingsPage() {
 
   return (
     <div className="space-y-6">
+      <BackButton />
       {/* Header */}
       <div>
         <div className="flex items-center gap-3 mb-2">

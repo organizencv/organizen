@@ -10,6 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { getTranslation, Language } from '@/lib/i18n';
 import { Building2, FileText, Settings2, LayoutList } from 'lucide-react';
+import { BackButton } from '@/components/back-button';
 import { DepartmentTemplateManager } from './DepartmentTemplateManager';
 import { DepartmentCustomFieldManager } from './DepartmentCustomFieldManager';
 import { DepartmentTreeView } from './DepartmentTreeView';
@@ -85,6 +86,7 @@ export function DepartmentStructureSettings({
 
   return (
     <div className="space-y-6">
+      <BackButton />
       <div>
         <h2 className="text-3xl font-bold tracking-tight flex items-center gap-3">
           <Building2 className="h-8 w-8 text-primary" />

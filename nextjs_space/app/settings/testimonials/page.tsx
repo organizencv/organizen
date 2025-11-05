@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { UserAvatar } from '@/components/user-avatar';
+import { BackButton } from '@/components/back-button';
 import { 
   Plus, 
   Edit, 
@@ -276,6 +277,7 @@ export default function TestimonialsPage() {
 
   return (
     <div className="container mx-auto py-8 px-4">
+      <BackButton />
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-3xl font-bold">Testemunhos</h1>
