@@ -26,6 +26,7 @@ import {
   ListTodo,
   UserCog
 } from 'lucide-react';
+import { UserDepartmentsManager } from '@/components/user-departments-manager';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -38,6 +39,7 @@ interface UserDetails {
   image?: string;
   createdAt: string;
   birthDate?: string;
+  companyId?: string;
   department?: {
     id: string;
     name: string;
@@ -309,14 +311,34 @@ export default function UserDetailsPage() {
       </div>
 
       {/* Tabbed Content */}
-      <Tabs defaultValue="teams" className="w-full">
-        <TabsList className="grid w-full grid-cols-5">
+      <Tabs defaultValue="departments" className="w-full">
+        <TabsList className="grid w-full grid-cols-6">
+          <TabsTrigger value="departments">Departamentos</TabsTrigger>
           <TabsTrigger value="teams">Equipas</TabsTrigger>
           <TabsTrigger value="tasks">Tarefas</TabsTrigger>
           <TabsTrigger value="shifts">Turnos</TabsTrigger>
           <TabsTrigger value="timeoff">Folgas</TabsTrigger>
           <TabsTrigger value="swaps">Trocas</TabsTrigger>
         </TabsList>
+
+        {/* Departments Tab */}
+        <TabsContent value="departments" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Departamentos do Utilizador</CardTitle>
+              <CardDescription>
+                Gerir os departamentos aos quais o utilizador está atribuído
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <UserDepartmentsManager
+                userId={user.id}
+                companyId={user.companyId || ''}
+                canEdit={session?.user?.role === 'ADMIN' || session?.user?.role === 'MANAGER'}
+              />
+            </CardContent>
+          </Card>
+        </TabsContent>
 
         {/* Teams Tab */}
         <TabsContent value="teams" className="space-y-4">
