@@ -78,17 +78,19 @@ export async function PUT(request: NextRequest) {
       );
     }
 
+    // Preparar dados para atualização
+    const updateData: any = {};
+    if (enabled !== undefined) updateData.enabled = enabled;
+    if (visibility !== undefined) updateData.visibility = visibility;
+    if (notifyBirthdayPerson !== undefined) updateData.notifyBirthdayPerson = notifyBirthdayPerson;
+    if (notifyTeamMembers !== undefined) updateData.notifyTeamMembers = notifyTeamMembers;
+    if (notifyManagers !== undefined) updateData.notifyManagers = notifyManagers;
+    if (customMessage !== undefined) updateData.customMessage = customMessage;
+
     // Atualizar ou criar configurações
     const settings = await prisma.birthdaySettings.upsert({
       where: { companyId: session.user.companyId },
-      update: {
-        enabled: enabled ?? undefined,
-        visibility: visibility ?? undefined,
-        notifyBirthdayPerson: notifyBirthdayPerson ?? undefined,
-        notifyTeamMembers: notifyTeamMembers ?? undefined,
-        notifyManagers: notifyManagers ?? undefined,
-        customMessage: customMessage !== undefined ? customMessage : undefined,
-      },
+      update: updateData,
       create: {
         companyId: session.user.companyId,
         enabled: enabled ?? true,

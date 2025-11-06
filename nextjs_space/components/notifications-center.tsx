@@ -31,7 +31,7 @@ interface Notification {
   id: string;
   title: string;
   message: string;
-  type: 'MESSAGE' | 'TASK' | 'SHIFT' | 'SYSTEM' | 'CHAT';
+  type: 'MESSAGE' | 'TASK' | 'SHIFT' | 'SYSTEM' | 'CHAT' | 'BIRTHDAY' | 'SHIFT_REMINDER' | 'EVENT' | 'CALENDAR_EVENT' | 'SHIFT_SWAP' | 'TIME_OFF' | 'MENTION' | 'REPORT' | 'TASK_ASSIGNED' | 'TASK_COMMENT';
   read: boolean;
   relatedId?: string | null;
   createdAt: string;
@@ -222,8 +222,34 @@ export function NotificationsCenter({ language }: NotificationsCenterProps) {
           router.push(`/tasks?taskId=${notification.relatedId}`);
           break;
         case 'SHIFT':
+        case 'SHIFT_REMINDER':
+        case 'SHIFT_SWAP':
           // Redirecionar para shifts com o ID do turno
           router.push(`/shifts?shiftId=${notification.relatedId}`);
+          break;
+        case 'BIRTHDAY':
+          // Redirecionar para o perfil do usuário aniversariante
+          if (notification.relatedId === session?.user?.id) {
+            // Se for o próprio aniversariante, ir para o seu perfil
+            router.push('/profile');
+          } else {
+            // Se for aniversário de outro usuário, ir para a página de usuários
+            router.push(`/users/${notification.relatedId}`);
+          }
+          break;
+        case 'TASK_ASSIGNED':
+        case 'TASK_COMMENT':
+          // Redirecionar para tasks com o ID da tarefa
+          router.push(`/tasks?taskId=${notification.relatedId}`);
+          break;
+        case 'EVENT':
+        case 'CALENDAR_EVENT':
+          // Redirecionar para o calendário
+          router.push('/calendar');
+          break;
+        case 'TIME_OFF':
+          // Redirecionar para solicitações
+          router.push('/requests');
           break;
         default:
           // Para notificações de sistema, apenas marcar como lida
@@ -239,9 +265,24 @@ export function NotificationsCenter({ language }: NotificationsCenterProps) {
       case 'CHAT':
         return '💭';
       case 'TASK':
+      case 'TASK_ASSIGNED':
+      case 'TASK_COMMENT':
         return '✅';
       case 'SHIFT':
+      case 'SHIFT_REMINDER':
+      case 'SHIFT_SWAP':
         return '🕐';
+      case 'BIRTHDAY':
+        return '🎂';
+      case 'EVENT':
+      case 'CALENDAR_EVENT':
+        return '📅';
+      case 'TIME_OFF':
+        return '🏖️';
+      case 'MENTION':
+        return '👤';
+      case 'REPORT':
+        return '📊';
       case 'SYSTEM':
         return '🔔';
       default:
