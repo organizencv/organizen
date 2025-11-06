@@ -139,6 +139,21 @@ export async function GET(
       createdAt: user.createdAt.toISOString(),
       department: user.department,
       team: user.team,
+      // teams é um array para compatibilidade com a página
+      teams: [
+        // Se o usuário tem uma equipa como membro, adiciona aqui
+        ...(user.team ? [{
+          id: user.team.id,
+          name: user.team.name,
+          role: 'Membro'
+        }] : []),
+        // Se o usuário lidera equipas, adiciona todas
+        ...(user.ledTeams || []).filter((ledTeam: any) => ledTeam.id !== user.team?.id).map((ledTeam: any) => ({
+          id: ledTeam.id,
+          name: ledTeam.name,
+          role: 'Líder'
+        }))
+      ],
       ledTeams: user.ledTeams || [],
       ledTeamsCount: user.ledTeams?.length || 0,
       assignedTasksCount: user.assignedTasks.length,
