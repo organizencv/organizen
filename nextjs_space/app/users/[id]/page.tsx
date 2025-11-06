@@ -37,6 +37,7 @@ interface UserDetails {
   role: string;
   image?: string;
   createdAt: string;
+  birthDate?: string;
   department?: {
     id: string;
     name: string;
@@ -128,6 +129,14 @@ const priorityLabels = {
   URGENT: 'Urgente'
 };
 
+// Função para verificar se hoje é aniversário
+const isBirthdayToday = (birthDate?: string): boolean => {
+  if (!birthDate) return false;
+  const today = new Date();
+  const birth = new Date(birthDate);
+  return today.getMonth() === birth.getMonth() && today.getDate() === birth.getDate();
+};
+
 export default function UserDetailsPage() {
   const params = useParams();
   const router = useRouter();
@@ -213,7 +222,14 @@ export default function UserDetailsPage() {
             </Avatar>
             <div className="flex-1 space-y-4">
               <div>
-                <h2 className="text-2xl font-bold">{user.name}</h2>
+                <div className="flex items-center gap-3 flex-wrap">
+                  <h2 className="text-2xl font-bold">{user.name}</h2>
+                  {isBirthdayToday(user.birthDate) && (
+                    <Badge className="text-base px-3 py-1 bg-gradient-to-r from-pink-500 to-yellow-500 text-white animate-pulse">
+                      🎂 Feliz Aniversário!
+                    </Badge>
+                  )}
+                </div>
                 <p className="text-muted-foreground flex items-center gap-2 mt-1">
                   <Mail className="h-4 w-4" />
                   {user.email}
