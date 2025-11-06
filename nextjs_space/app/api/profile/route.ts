@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/db';
+import { parseDateWithoutTimezone } from '@/lib/utils';
 
 export const dynamic = "force-dynamic";
 
@@ -50,12 +51,12 @@ export async function PUT(request: NextRequest) {
     if (data.state !== undefined) updateData.state = data.state;
     if (data.country !== undefined) updateData.country = data.country;
     if (data.postalCode !== undefined) updateData.postalCode = data.postalCode;
-    if (data.birthDate !== undefined) updateData.birthDate = data.birthDate ? new Date(data.birthDate) : null;
+    if (data.birthDate !== undefined) updateData.birthDate = parseDateWithoutTimezone(data.birthDate);
     if (data.taxId !== undefined) updateData.taxId = data.taxId;
     
     // Professional data
     if (data.employeeNumber !== undefined) updateData.employeeNumber = data.employeeNumber;
-    if (data.hireDate !== undefined) updateData.hireDate = data.hireDate ? new Date(data.hireDate) : null;
+    if (data.hireDate !== undefined) updateData.hireDate = parseDateWithoutTimezone(data.hireDate);
     if (data.jobTitle !== undefined) updateData.jobTitle = data.jobTitle;
     if (data.departmentId !== undefined) updateData.departmentId = data.departmentId || null;
     

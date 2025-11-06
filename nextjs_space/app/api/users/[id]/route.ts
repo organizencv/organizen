@@ -4,6 +4,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/db';
 import { revalidatePath } from 'next/cache';
+import { parseDateWithoutTimezone } from '@/lib/utils';
 
 export const dynamic = "force-dynamic";
 
@@ -347,7 +348,7 @@ export async function PUT(
       role,
       departmentId: departmentId || null,
       teamId: shouldRemoveFromTeam ? null : (teamId || null),
-      birthDate: birthDate ? new Date(birthDate) : null,
+      birthDate: parseDateWithoutTimezone(birthDate),
     };
 
     const user = await prisma.user.update({

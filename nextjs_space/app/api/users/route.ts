@@ -6,6 +6,7 @@ import { prisma } from '@/lib/db';
 import bcrypt from 'bcryptjs';
 import { revalidatePath } from 'next/cache';
 import { sendWelcomeEmail } from '@/lib/email';
+import { parseDateWithoutTimezone } from '@/lib/utils';
 
 export const dynamic = "force-dynamic";
 
@@ -86,7 +87,7 @@ export async function POST(request: NextRequest) {
         companyId: session.user.companyId,
         departmentId: departmentId || null,
         teamId: teamId || null,
-        birthDate: birthDate ? new Date(birthDate) : null,
+        birthDate: parseDateWithoutTimezone(birthDate),
       },
       include: {
         department: true,
