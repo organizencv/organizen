@@ -14,7 +14,8 @@ import {
   AlertCircle,
   TrendingUp,
   Calendar,
-  MessageSquare
+  MessageSquare,
+  Cake
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 
@@ -34,6 +35,7 @@ export function DashboardContent({ stats: initialStats, userRole, userName }: Da
   const router = useRouter();
   const [language, setLanguage] = useState<Language>('pt');
   const [stats, setStats] = useState(initialStats);
+  const [isBirthday, setIsBirthday] = useState(false);
 
   useEffect(() => {
     // Primeiro tenta ler do localStorage (persistência local)
@@ -45,6 +47,36 @@ export function DashboardContent({ stats: initialStats, userRole, userName }: Da
       const sessionLang = session.user.language as Language;
       setLanguage(sessionLang);
       localStorage.setItem('userLanguage', sessionLang);
+    }
+  }, [session]);
+
+  // Check if today is user's birthday
+  useEffect(() => {
+    const checkBirthday = async () => {
+      try {
+        const response = await fetch('/api/profile');
+        if (response.ok) {
+          const userData = await response.json();
+          if (userData.birthDate) {
+            const birthDate = new Date(userData.birthDate);
+            const today = new Date();
+            
+            // Compare month and day
+            if (
+              birthDate.getMonth() === today.getMonth() &&
+              birthDate.getDate() === today.getDate()
+            ) {
+              setIsBirthday(true);
+            }
+          }
+        }
+      } catch (error) {
+        console.error('Failed to check birthday:', error);
+      }
+    };
+
+    if (session?.user?.id) {
+      checkBirthday();
     }
   }, [session]);
 
@@ -156,10 +188,19 @@ export function DashboardContent({ stats: initialStats, userRole, userName }: Da
             <CardTitle className="text-2xl">
               {getTranslation('welcome', language)}, {userName}!
             </CardTitle>
-            <div className="text-primary-foreground/80 text-sm">
+            <div className="flex items-center gap-2 text-primary-foreground/80 text-sm">
               <Badge variant="secondary">
                 {getRoleTranslation(userRole)}
               </Badge>
+              {isBirthday && (
+                <Badge className="bg-gradient-to-r from-orange-400 to-pink-500 text-white border-none animate-pulse">
+                  <Cake className="h-3 w-3 mr-1" />
+                  {language === 'pt' ? 'Feliz Aniversário!' : 
+                   language === 'en' ? 'Happy Birthday!' :
+                   language === 'es' ? '¡Feliz Cumpleaños!' :
+                   'Bon Anniversaire!'}
+                </Badge>
+              )}
             </div>
           </CardHeader>
         </Card>
