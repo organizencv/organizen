@@ -16,6 +16,7 @@ import { BackButton } from './back-button';
 import { useToast } from '@/hooks/use-toast';
 import { motion } from 'framer-motion';
 import { ProfilePhotoUploader } from './profile-photo-uploader';
+import { UserDepartmentsManager } from './user-departments-manager';
 
 interface CompanyData {
   id: string;
@@ -761,6 +762,15 @@ export function ProfileContent({ user: initialUser }: ProfileContentProps) {
                           </div>
                         </div>
                       </div>
+                    </div>
+
+                    {/* Múltiplos Departamentos */}
+                    <div className="pt-6 border-t">
+                      <UserDepartmentsManager
+                        userId={user.id}
+                        companyId={user.company.id}
+                        canEdit={false}
+                      />
                     </div>
 
                     <Button onClick={() => setIsEditingProfessional(true)}>

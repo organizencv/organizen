@@ -2,7 +2,9 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useSession } from 'next-auth/react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from './ui/dialog';
+import { UserDepartmentsManager } from './user-departments-manager';
 import { Badge } from './ui/badge';
 import { Card, CardContent } from './ui/card';
 import { Separator } from './ui/separator';
@@ -38,6 +40,7 @@ interface User {
   email: string;
   role: string;
   image?: string | null;
+  companyId: string;
   departmentId?: string | null;
   teamId?: string | null;
   department: { id: string; name: string } | null;
@@ -77,6 +80,8 @@ interface DetailedUser extends User {
 }
 
 export function UserDetailsModal({ userId, onClose, language }: UserDetailsModalProps) {
+  const { data: session } = useSession();
+  const currentUserRole = session?.user?.role || 'STAFF';
   const [user, setUser] = useState<DetailedUser | null>(null);
   const [loading, setLoading] = useState(true);
   const [showImageModal, setShowImageModal] = useState(false);
@@ -540,13 +545,22 @@ export function UserDetailsModal({ userId, onClose, language }: UserDetailsModal
                       </div>
                       <div>
                         <p className="text-sm text-muted-foreground">
-                          {language === 'pt' ? 'Departamento' : 'Department'}
+                          {language === 'pt' ? 'Departamento Principal' : 'Primary Department'}
                         </p>
                         <p className="font-medium">
                           {user.department?.name || (language === 'pt' ? 'Sem departamento' : 'No department')}
                         </p>
                       </div>
                     </div>
+                  </div>
+
+                  {/* Múltiplos Departamentos */}
+                  <div className="pt-6 border-t">
+                    <UserDepartmentsManager
+                      userId={user.id}
+                      companyId={user.companyId}
+                      canEdit={currentUserRole === 'ADMIN' || currentUserRole === 'MANAGER'}
+                    />
                   </div>
                 </CardContent>
               </Card>

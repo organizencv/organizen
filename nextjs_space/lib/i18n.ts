@@ -495,7 +495,34 @@ export const translations = {
     // Install PWA
     install: 'Instalar',
     installApp: 'Instalar Aplicação',
-    installPrompt: 'Instale o OrganiZen no seu dispositivo para acesso rápido'
+    installPrompt: 'Instale o OrganiZen no seu dispositivo para acesso rápido',
+    
+    // Multiple Departments
+    addDepartment: 'Adicionar Departamento',
+    addDepartmentToUser: 'Adicionar Departamento ao Usuário',
+    addDepartmentDescription: 'Atribua um departamento adicional ao colaborador',
+    selectDepartment: 'Selecione o departamento',
+    selectRole: 'Selecione o papel',
+    selectTeam: 'Selecione a equipa',
+    primaryDepartment: 'Departamento Principal',
+    noDepartmentsAssigned: 'Nenhum departamento atribuído',
+    primary: 'Principal',
+    inactive: 'Inativo',
+    availability: 'Disponibilidade',
+    priorityLow: 'Baixa',
+    priorityMedium: 'Média',
+    priorityHigh: 'Alta',
+    priorityCritical: 'Crítica',
+    editDepartmentAssignment: 'Editar Atribuição de Departamento',
+    useGlobalRole: 'Usar papel global',
+    noTeam: 'Sem equipa',
+    departmentAddedSuccess: 'Departamento adicionado com sucesso',
+    departmentUpdatedSuccess: 'Departamento atualizado com sucesso',
+    departmentRemovedSuccess: 'Departamento removido com sucesso',
+    errorAddingDepartment: 'Erro ao adicionar departamento',
+    errorUpdatingDepartment: 'Erro ao atualizar departamento',
+    errorRemovingDepartment: 'Erro ao remover departamento',
+    confirmRemoveDepartment: 'Tem certeza que deseja remover este departamento?'
   },
   
   en: {
@@ -992,7 +1019,35 @@ export const translations = {
     // Install PWA
     install: 'Install',
     installApp: 'Install App',
-    installPrompt: 'Install OrganiZen on your device for quick access'
+    installPrompt: 'Install OrganiZen on your device for quick access',
+    
+    // Multiple Departments
+    addDepartment: 'Add Department',
+    addDepartmentToUser: 'Add Department to User',
+    addDepartmentDescription: 'Assign an additional department to the employee',
+    selectDepartment: 'Select department',
+    selectRole: 'Select role',
+    selectTeam: 'Select team',
+    optional: 'optional',
+    primaryDepartment: 'Primary Department',
+    noDepartmentsAssigned: 'No departments assigned',
+    primary: 'Primary',
+    inactive: 'Inactive',
+    availability: 'Availability',
+    priorityLow: 'Low',
+    priorityMedium: 'Medium',
+    priorityHigh: 'High',
+    priorityCritical: 'Critical',
+    editDepartmentAssignment: 'Edit Department Assignment',
+    useGlobalRole: 'Use global role',
+    noTeam: 'No team',
+    departmentAddedSuccess: 'Department added successfully',
+    departmentUpdatedSuccess: 'Department updated successfully',
+    departmentRemovedSuccess: 'Department removed successfully',
+    errorAddingDepartment: 'Error adding department',
+    errorUpdatingDepartment: 'Error updating department',
+    errorRemovingDepartment: 'Error removing department',
+    confirmRemoveDepartment: 'Are you sure you want to remove this department?'
   },
   
   es: {
@@ -1368,7 +1423,35 @@ export const translations = {
     // Install PWA
     install: 'Instalar',
     installApp: 'Instalar Aplicación',
-    installPrompt: 'Instale OrganiZen en su dispositivo para acceso rápido'
+    installPrompt: 'Instale OrganiZen en su dispositivo para acceso rápido',
+    
+    // Multiple Departments
+    addDepartment: 'Agregar Departamento',
+    addDepartmentToUser: 'Agregar Departamento al Usuario',
+    addDepartmentDescription: 'Asigne un departamento adicional al empleado',
+    selectDepartment: 'Seleccione el departamento',
+    selectRole: 'Seleccione el rol',
+    selectTeam: 'Seleccione el equipo',
+    optional: 'opcional',
+    primaryDepartment: 'Departamento Principal',
+    noDepartmentsAssigned: 'Sin departamentos asignados',
+    primary: 'Principal',
+    inactive: 'Inactivo',
+    availability: 'Disponibilidad',
+    priorityLow: 'Baja',
+    priorityMedium: 'Media',
+    priorityHigh: 'Alta',
+    priorityCritical: 'Crítica',
+    editDepartmentAssignment: 'Editar Asignación de Departamento',
+    useGlobalRole: 'Usar rol global',
+    noTeam: 'Sin equipo',
+    departmentAddedSuccess: 'Departamento agregado con éxito',
+    departmentUpdatedSuccess: 'Departamento actualizado con éxito',
+    departmentRemovedSuccess: 'Departamento eliminado con éxito',
+    errorAddingDepartment: 'Error al agregar departamento',
+    errorUpdatingDepartment: 'Error al actualizar departamento',
+    errorRemovingDepartment: 'Error al eliminar departamento',
+    confirmRemoveDepartment: '¿Está seguro de que desea eliminar este departamento?'
   },
   
   fr: {
@@ -1744,7 +1827,35 @@ export const translations = {
     // Install PWA
     install: 'Installer',
     installApp: 'Installer l\'Application',
-    installPrompt: 'Installez OrganiZen sur votre appareil pour un accès rapide'
+    installPrompt: 'Installez OrganiZen sur votre appareil pour un accès rapide',
+    
+    // Multiple Departments
+    addDepartment: 'Ajouter un Département',
+    addDepartmentToUser: 'Ajouter un Département à l\'Utilisateur',
+    addDepartmentDescription: 'Attribuer un département supplémentaire à l\'employé',
+    selectDepartment: 'Sélectionnez le département',
+    selectRole: 'Sélectionnez le rôle',
+    selectTeam: 'Sélectionnez l\'équipe',
+    optional: 'optionnel',
+    primaryDepartment: 'Département Principal',
+    noDepartmentsAssigned: 'Aucun département attribué',
+    primary: 'Principal',
+    inactive: 'Inactif',
+    availability: 'Disponibilité',
+    priorityLow: 'Basse',
+    priorityMedium: 'Moyenne',
+    priorityHigh: 'Haute',
+    priorityCritical: 'Critique',
+    editDepartmentAssignment: 'Modifier l\'Attribution de Département',
+    useGlobalRole: 'Utiliser le rôle global',
+    noTeam: 'Aucune équipe',
+    departmentAddedSuccess: 'Département ajouté avec succès',
+    departmentUpdatedSuccess: 'Département mis à jour avec succès',
+    departmentRemovedSuccess: 'Département supprimé avec succès',
+    errorAddingDepartment: 'Erreur lors de l\'ajout du département',
+    errorUpdatingDepartment: 'Erreur lors de la mise à jour du département',
+    errorRemovingDepartment: 'Erreur lors de la suppression du département',
+    confirmRemoveDepartment: 'Êtes-vous sûr de vouloir supprimer ce département?'
   }
 };
 

@@ -175,20 +175,57 @@ model CompanyBranding {
 }
 
 model Department {
-  id        String   @id @default(cuid())
-  name      String
-  companyId String
-  templateId String? // Referência ao template usado (se aplicável)
-  customFieldsData Json? // Dados dos campos customizados
-  displayOrder Int   @default(0) // Ordem de exibição customizada
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  company   Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  template  DepartmentTemplate? @relation(fields: [templateId], references: [id], onDelete: SetNull)
-  teams     Team[]
-  users     User[]
+  id               String           @id @default(cuid())
+  name             String
+  companyId        String
+  templateId       String?          // Referência ao template usado (se aplicável)
+  customFieldsData Json?            // Dados dos campos customizados
+  displayOrder     Int              @default(0) // Ordem de exibição customizada
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+  company          Company          @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  template         DepartmentTemplate? @relation(fields: [templateId], references: [id], onDelete: SetNull)
+  teams            Team[]
+  users            User[]           // Usuários com departamento principal (compatibilidade)
+  userDepartments  UserDepartment[] // Múltiplos usuários (novo sistema)
 
   @@map("departments")
+}
+
+// ========================================
+// SISTEMA DE MÚLTIPLOS DEPARTAMENTOS
+// ========================================
+
+model UserDepartment {
+  id           String     @id @default(cuid())
+  userId       String
+  departmentId String
+  
+  // Fase 1 - MVP
+  isActive     Boolean    @default(true)  // Departamento ativo ou inativo
+  isPrimary    Boolean    @default(false) // Departamento principal do usuário
+  
+  // Fase 2 - Papéis por Departamento
+  role         UserRole?                  // Papel específico neste departamento (null = usa role global do User)
+  teamId       String?                    // Equipa específica neste departamento
+  
+  // Fase 3 - Disponibilidade e Prioridades
+  availability Int        @default(100)   // % de disponibilidade (0-100)
+  priority     Int        @default(0)     // Prioridade (0=baixa, 1=média, 2=alta, 3=crítica)
+  
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+  
+  // Relações
+  user         User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  department   Department @relation(fields: [departmentId], references: [id], onDelete: Cascade)
+  team         Team?      @relation("UserDepartmentTeam", fields: [teamId], references: [id], onDelete: SetNull)
+  
+  @@unique([userId, departmentId])
+  @@index([userId])
+  @@index([departmentId])
+  @@index([isActive])
+  @@map("user_departments")
 }
 
 model DepartmentTemplate {
@@ -239,23 +276,24 @@ model DepartmentCustomField {
 }
 
 model Team {
-  id           String     @id @default(cuid())
-  name         String
-  description  String?
-  departmentId String
-  leaderId     String?    // Líder da equipa (pode ser ADMIN, MANAGER ou SUPERVISOR)
-  parentTeamId String?    // Equipa pai (para hierarquia)
-  level        TeamLevel  @default(OPERATIONS) // Nível hierárquico da equipa
-  displayOrder Int        @default(0) // Ordem de exibição customizada
-  createdAt    DateTime   @default(now())
-  updatedAt    DateTime   @updatedAt
+  id                String           @id @default(cuid())
+  name              String
+  description       String?
+  departmentId      String
+  leaderId          String?          // Líder da equipa (pode ser ADMIN, MANAGER ou SUPERVISOR)
+  parentTeamId      String?          // Equipa pai (para hierarquia)
+  level             TeamLevel        @default(OPERATIONS) // Nível hierárquico da equipa
+  displayOrder      Int              @default(0) // Ordem de exibição customizada
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
   
   // Relações
-  department   Department @relation(fields: [departmentId], references: [id], onDelete: Cascade)
-  leader       User?      @relation("TeamLeader", fields: [leaderId], references: [id], onDelete: SetNull)
-  parentTeam   Team?      @relation("TeamHierarchy", fields: [parentTeamId], references: [id], onDelete: SetNull)
-  childTeams   Team[]     @relation("TeamHierarchy")
-  members      User[]     @relation("TeamMembers")
+  department        Department       @relation(fields: [departmentId], references: [id], onDelete: Cascade)
+  leader            User?            @relation("TeamLeader", fields: [leaderId], references: [id], onDelete: SetNull)
+  parentTeam        Team?            @relation("TeamHierarchy", fields: [parentTeamId], references: [id], onDelete: SetNull)
+  childTeams        Team[]           @relation("TeamHierarchy")
+  members           User[]           @relation("TeamMembers")
+  userDepartments   UserDepartment[] @relation("UserDepartmentTeam") // Membros via múltiplos departamentos
 
   @@map("teams")
   @@index([leaderId])
@@ -272,8 +310,8 @@ model User {
   password                String?
   role                    UserRole            @default(STAFF)
   companyId               String
-  departmentId            String?             // Opcional - null indica lista de espera
-  teamId                  String?             // Opcional - null indica lista de espera
+  departmentId            String?             // Departamento principal (compatibilidade)
+  teamId                  String?             // Equipa principal (compatibilidade)
   language                String              @default("pt")
   waitingListOrder        Int                 @default(0) // Ordem na lista de espera
   teamMemberOrder         Int                 @default(0) // Ordem dentro da equipa
@@ -314,6 +352,7 @@ model User {
   shiftSwapRequests       ShiftSwapRequest[]  @relation("ShiftSwapRequester")
   shiftSwapRequestsTarget ShiftSwapRequest[]  @relation("ShiftSwapTarget")
   timeOffRequests         TimeOffRequest[]
+  userDepartments         UserDepartment[]    // Múltiplos departamentos (novo sistema)
 
   @@map("users")
 }
