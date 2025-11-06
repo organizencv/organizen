@@ -384,9 +384,7 @@ export function UserDepartmentsManager({
 
                 <div className="flex gap-2">
                   <Button onClick={handleAddDepartment} className="flex-1">
-                  <Button onClick={handleAddDepartment} className="flex-1">
                     {getTranslation('addDepartment', language)}
-                  </Button>
                   </Button>
                   <Button
                     variant="outline"
