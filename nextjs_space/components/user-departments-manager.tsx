@@ -384,7 +384,9 @@ export function UserDepartmentsManager({
 
                 <div className="flex gap-2">
                   <Button onClick={handleAddDepartment} className="flex-1">
-                    {getTranslation('add', language)}
+                  <Button onClick={handleAddDepartment} className="flex-1">
+                    {getTranslation('addDepartment', language)}
+                  </Button>
                   </Button>
                   <Button
                     variant="outline"
@@ -426,7 +428,7 @@ export function UserDepartmentsManager({
                   <div className="flex flex-wrap gap-2 text-sm">
                     {userDept.role && (
                       <Badge className={getRoleBadgeColor(userDept.role)}>
-                        {t(userDept.role.toLowerCase())}
+                        {getTranslation(userDept.role.toLowerCase() as any, language)}
                       </Badge>
                     )}
                     {userDept.team && (

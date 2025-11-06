@@ -1028,7 +1028,6 @@ export const translations = {
     selectDepartment: 'Select department',
     selectRole: 'Select role',
     selectTeam: 'Select team',
-    optional: 'optional',
     primaryDepartment: 'Primary Department',
     noDepartmentsAssigned: 'No departments assigned',
     primary: 'Primary',
