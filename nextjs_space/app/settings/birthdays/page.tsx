@@ -64,6 +64,8 @@ export default function BirthdaySettingsPage() {
   const handleSave = async () => {
     setSaving(true);
     try {
+      console.log('💾 Guardando configurações:', settings);
+      
       const response = await fetch('/api/settings/birthdays', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
@@ -71,6 +73,12 @@ export default function BirthdaySettingsPage() {
       });
 
       if (response.ok) {
+        const savedData = await response.json();
+        console.log('✅ Configurações guardadas:', savedData);
+        
+        // Recarregar as configurações do servidor para confirmar
+        await loadSettings();
+        
         toast({
           title: language === 'pt' ? 'Sucesso' : 'Success',
           description: language === 'pt' 
@@ -78,6 +86,8 @@ export default function BirthdaySettingsPage() {
             : 'Settings saved successfully',
         });
       } else {
+        const errorData = await response.json();
+        console.error('❌ Erro ao guardar:', errorData);
         throw new Error('Failed to save settings');
       }
     } catch (error) {

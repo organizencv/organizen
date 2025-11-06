@@ -53,7 +53,10 @@ export async function PUT(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
     
+    console.log('🔐 Session user:', session?.user?.email, 'Role:', session?.user?.role);
+    
     if (!session || !['ADMIN', 'MANAGER'].includes(session.user.role)) {
+      console.log('❌ Unauthorized access attempt');
       return NextResponse.json(
         { error: 'Unauthorized' },
         { status: 401 }
@@ -61,6 +64,8 @@ export async function PUT(request: NextRequest) {
     }
 
     const body = await request.json();
+    console.log('📦 Received data:', body);
+    
     const {
       enabled,
       visibility,
@@ -72,6 +77,7 @@ export async function PUT(request: NextRequest) {
 
     // Validar visibility
     if (visibility && !['ALL', 'SAME_DEPARTMENT', 'MANAGERS_ONLY'].includes(visibility)) {
+      console.log('❌ Invalid visibility:', visibility);
       return NextResponse.json(
         { error: 'Invalid visibility value' },
         { status: 400 }
@@ -86,6 +92,9 @@ export async function PUT(request: NextRequest) {
     if (notifyTeamMembers !== undefined) updateData.notifyTeamMembers = notifyTeamMembers;
     if (notifyManagers !== undefined) updateData.notifyManagers = notifyManagers;
     if (customMessage !== undefined) updateData.customMessage = customMessage;
+
+    console.log('💾 Update data:', updateData);
+    console.log('🏢 Company ID:', session.user.companyId);
 
     // Atualizar ou criar configurações
     const settings = await prisma.birthdaySettings.upsert({
@@ -102,12 +111,14 @@ export async function PUT(request: NextRequest) {
       },
     });
 
+    console.log('✅ Settings saved successfully:', settings);
+
     return NextResponse.json(settings);
 
   } catch (error) {
-    console.error('Birthday settings PUT error:', error);
+    console.error('❌ Birthday settings PUT error:', error);
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { error: 'Internal server error', details: (error as Error).message },
       { status: 500 }
     );
   }
