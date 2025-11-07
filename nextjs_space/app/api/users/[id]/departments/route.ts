@@ -42,10 +42,14 @@ export async function GET(
     })
 
     return NextResponse.json(userDepartments)
-  } catch (error) {
+  } catch (error: any) {
     console.error('Erro ao buscar departamentos do usuário:', error)
     return NextResponse.json(
-      { error: 'Erro ao buscar departamentos do usuário' },
+      { 
+        error: 'Erro ao buscar departamentos do usuário',
+        details: error?.message || String(error),
+        stack: process.env.NODE_ENV === 'development' ? error?.stack : undefined
+      },
       { status: 500 }
     )
   }
@@ -144,10 +148,14 @@ export async function POST(
     }
 
     return NextResponse.json(newAssignment, { status: 201 })
-  } catch (error) {
+  } catch (error: any) {
     console.error('Erro ao adicionar departamento ao usuário:', error)
     return NextResponse.json(
-      { error: 'Erro ao adicionar departamento ao usuário' },
+      { 
+        error: 'Erro ao adicionar departamento ao usuário',
+        details: error?.message || String(error),
+        stack: process.env.NODE_ENV === 'development' ? error?.stack : undefined
+      },
       { status: 500 }
     )
   }

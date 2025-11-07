@@ -145,10 +145,17 @@ export function UserDepartmentsManager({
     }
 
     try {
+      // Preparar dados - converter strings vazias em null
+      const dataToSend = {
+        ...formData,
+        teamId: formData.teamId || null,
+        role: formData.role || null,
+      }
+
       const response = await fetch(`/api/users/${userId}/departments`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(dataToSend),
       })
 
       if (response.ok) {
@@ -170,12 +177,19 @@ export function UserDepartmentsManager({
     if (!selectedDepartment) return
 
     try {
+      // Preparar dados - converter strings vazias em null
+      const dataToSend = {
+        ...formData,
+        teamId: formData.teamId || null,
+        role: formData.role || null,
+      }
+
       const response = await fetch(
         `/api/users/${userId}/departments/${selectedDepartment.departmentId}`,
         {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(formData),
+          body: JSON.stringify(dataToSend),
         }
       )
 
