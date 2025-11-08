@@ -10,12 +10,14 @@ import { Input } from './ui/input';
 import { ScrollArea } from './ui/scroll-area';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 import { getTranslation, Language } from '@/lib/i18n';
-import { MessageCircle, Search, Send, Circle, Clock } from 'lucide-react';
+import { MessageCircle, Search, Send, Circle, Clock, FileText, Download, X, Image as ImageIcon } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { motion, AnimatePresence } from 'framer-motion';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { BackButton } from './back-button';
+import { ChatAttachmentUploader } from './chat-attachment-uploader';
+import Image from 'next/image';
 
 interface User {
   id: string;
@@ -25,6 +27,14 @@ interface User {
   image?: string | null;
 }
 
+interface Attachment {
+  id: string;
+  fileName: string;
+  fileSize: number;
+  mimeType: string;
+  cloud_storage_path: string;
+}
+
 interface ChatMessage {
   id: string;
   content: string;
@@ -32,6 +42,7 @@ interface ChatMessage {
   receiverId: string;
   read: boolean;
   createdAt: string;
+  attachments?: Attachment[];
 }
 
 interface Conversation {
@@ -52,6 +63,110 @@ interface ChatContentProps {
   openUserId?: string;
 }
 
+// Componente para preview de anexos
+function AttachmentPreview({ attachment, isOwnMessage }: { attachment: Attachment; isOwnMessage: boolean }) {
+  const [downloadUrl, setDownloadUrl] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  const isImage = attachment.mimeType.startsWith('image/');
+  
+  const formatFileSize = (bytes: number): string => {
+    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+    return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
+  };
+
+  const fetchDownloadUrl = async () => {
+    if (downloadUrl || loading) return;
+    
+    setLoading(true);
+    try {
+      const response = await fetch(`/api/chat/attachments?id=${attachment.id}`);
+      if (response.ok) {
+        const data = await response.json();
+        setDownloadUrl(data.downloadUrl);
+      }
+    } catch (error) {
+      console.error('Error fetching download URL:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDownload = async () => {
+    await fetchDownloadUrl();
+    if (downloadUrl) {
+      // Abrir em nova aba para download
+      window.open(downloadUrl, '_blank');
+    }
+  };
+
+  // Para imagens, carregar URL automaticamente
+  useEffect(() => {
+    if (isImage) {
+      fetchDownloadUrl();
+    }
+  }, [isImage]);
+
+  if (isImage && downloadUrl) {
+    return (
+      <div className="relative group cursor-pointer" onClick={handleDownload}>
+        <div className={cn(
+          "relative w-full max-w-xs rounded overflow-hidden",
+          "border-2",
+          isOwnMessage ? "border-blue-400" : "border-border"
+        )}>
+          <Image
+            src={downloadUrl}
+            alt={attachment.fileName}
+            width={300}
+            height={200}
+            className="object-cover w-full h-auto"
+            style={{ maxHeight: '300px' }}
+          />
+        </div>
+        <p className={cn(
+          "text-xs mt-1",
+          isOwnMessage ? "text-blue-100" : "text-muted-foreground"
+        )}>
+          {attachment.fileName} • {formatFileSize(attachment.fileSize)}
+        </p>
+      </div>
+    );
+  }
+
+  // Para outros ficheiros, mostrar botão de download
+  return (
+    <button
+      onClick={handleDownload}
+      disabled={loading}
+      className={cn(
+        "flex items-center gap-2 p-2 rounded",
+        "border transition-colors",
+        isOwnMessage 
+          ? "bg-blue-700 border-blue-400 hover:bg-blue-800 text-white"
+          : "bg-background border-border hover:bg-muted"
+      )}
+    >
+      <FileText className="h-4 w-4 flex-shrink-0" />
+      <div className="flex-1 min-w-0 text-left">
+        <p className="text-xs font-medium truncate">{attachment.fileName}</p>
+        <p className={cn(
+          "text-xs",
+          isOwnMessage ? "text-blue-100" : "text-muted-foreground"
+        )}>
+          {formatFileSize(attachment.fileSize)}
+        </p>
+      </div>
+      {loading ? (
+        <div className="animate-spin h-4 w-4 border-2 border-current border-t-transparent rounded-full" />
+      ) : (
+        <Download className="h-4 w-4 flex-shrink-0" />
+      )}
+    </button>
+  );
+}
+
 export function ChatContent({ users, currentUserId, currentUserName, openUserId }: ChatContentProps) {
   const { data: session } = useSession();
   const [language, setLanguage] = useState<Language>('pt');
@@ -62,6 +177,7 @@ export function ChatContent({ users, currentUserId, currentUserName, openUserId 
   const [searchTerm, setSearchTerm] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const [isSending, setIsSending] = useState(false);
+  const [pendingAttachments, setPendingAttachments] = useState<Attachment[]>([]); // NOVO
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const typingTimeoutRef = useRef<NodeJS.Timeout>();
   const pollingRef = useRef<NodeJS.Timeout>();
@@ -174,16 +290,20 @@ export function ChatContent({ users, currentUserId, currentUserName, openUserId 
   };
 
   const sendMessage = async () => {
-    if (!newMessage.trim() || !selectedUser || isSending) return;
+    // Permitir enviar se houver mensagem OU anexos
+    if ((!newMessage.trim() && pendingAttachments.length === 0) || !selectedUser || isSending) return;
 
     setIsSending(true);
     try {
+      const attachmentIds = pendingAttachments.map(a => a.id);
+      
       const response = await fetch('/api/chat/messages', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           receiverId: selectedUser.id,
-          content: newMessage.trim()
+          content: newMessage.trim() || '', // Pode estar vazio se só houver anexos
+          attachmentIds: attachmentIds.length > 0 ? attachmentIds : undefined
         })
       });
 
@@ -191,6 +311,7 @@ export function ChatContent({ users, currentUserId, currentUserName, openUserId 
         const message = await response.json();
         setMessages([...messages, message]);
         setNewMessage('');
+        setPendingAttachments([]); // Limpar anexos após envio
         
         // Update typing status
         await updateTypingStatus(false);
@@ -553,7 +674,24 @@ export function ChatContent({ users, currentUserId, currentUserName, openUserId 
                                     : 'bg-muted text-foreground'
                                 )}
                               >
-                                <p className="text-sm break-words">{message.content}</p>
+                                {/* Texto da mensagem */}
+                                {message.content && (
+                                  <p className="text-sm break-words">{message.content}</p>
+                                )}
+                                
+                                {/* Anexos */}
+                                {message.attachments && message.attachments.length > 0 && (
+                                  <div className={cn("space-y-2", message.content && "mt-2")}>
+                                    {message.attachments.map((attachment) => (
+                                      <AttachmentPreview
+                                        key={attachment.id}
+                                        attachment={attachment}
+                                        isOwnMessage={isOwnMessage}
+                                      />
+                                    ))}
+                                  </div>
+                                )}
+                                
                                 <span 
                                   className={cn(
                                     'text-xs mt-1 block',
@@ -574,7 +712,15 @@ export function ChatContent({ users, currentUserId, currentUserName, openUserId 
               </ScrollArea>
 
               {/* Message Input */}
-              <div className="p-4 border-t">
+              <div className="p-4 border-t space-y-3">
+                {/* Uploader de anexos */}
+                <ChatAttachmentUploader
+                  onAttachmentsChange={setPendingAttachments}
+                  maxFiles={5}
+                  maxFileSize={5 * 1024 * 1024}
+                />
+                
+                {/* Input de mensagem */}
                 <div className="flex gap-2">
                   <Input
                     value={newMessage}
@@ -586,7 +732,7 @@ export function ChatContent({ users, currentUserId, currentUserName, openUserId 
                   />
                   <Button 
                     onClick={sendMessage}
-                    disabled={!newMessage.trim() || isSending}
+                    disabled={(!newMessage.trim() && pendingAttachments.length === 0) || isSending}
                     className="gap-2"
                   >
                     <Send className="h-4 w-4" />

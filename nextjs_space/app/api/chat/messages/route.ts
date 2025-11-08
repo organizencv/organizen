@@ -23,13 +23,16 @@ export async function GET(request: NextRequest) {
 
     const currentUserId = session.user.id;
 
-    // Fetch messages between the two users
+    // Fetch messages between the two users (incluindo attachments)
     const messages = await prisma.chatMessage.findMany({
       where: {
         OR: [
           { senderId: currentUserId, receiverId: otherUserId },
           { senderId: otherUserId, receiverId: currentUserId }
         ]
+      },
+      include: {
+        attachments: true  // NOVO: Incluir anexos
       },
       orderBy: { createdAt: 'asc' },
       take: limit
@@ -62,22 +65,67 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { receiverId, content } = body;
+    const { receiverId, content, attachmentIds } = body;
 
-    if (!receiverId || !content) {
-      return NextResponse.json({ error: 'Receiver and content are required' }, { status: 400 });
+    if (!receiverId) {
+      return NextResponse.json({ error: 'Receiver is required' }, { status: 400 });
     }
 
+    // Validar que há conteúdo OU anexos
+    if (!content && (!attachmentIds || attachmentIds.length === 0)) {
+      return NextResponse.json({ error: 'Content or attachments are required' }, { status: 400 });
+    }
+
+    // Criar mensagem
     const message = await prisma.chatMessage.create({
       data: {
         senderId: session.user.id,
         receiverId,
-        content,
+        content: content || '', // Pode ser vazio se houver anexos
         companyId: session.user.companyId
+      },
+      include: {
+        attachments: true
       }
     });
 
-    // Create notification for receiver
+    // Se houver anexos, vincular à mensagem
+    if (attachmentIds && attachmentIds.length > 0) {
+      await prisma.attachment.updateMany({
+        where: {
+          id: { in: attachmentIds }
+        },
+        data: {
+          chatMessageId: message.id
+        }
+      });
+
+      // Recarregar mensagem com anexos
+      const messageWithAttachments = await prisma.chatMessage.findUnique({
+        where: { id: message.id },
+        include: { attachments: true }
+      });
+
+      // Criar notificação
+      const hasAttachments = messageWithAttachments?.attachments && messageWithAttachments.attachments.length > 0;
+      const notificationMessage = hasAttachments
+        ? `${session.user.name || session.user.email} enviou ${messageWithAttachments.attachments.length} ficheiro(s)`
+        : `Você recebeu uma nova mensagem de ${session.user.name || session.user.email}`;
+
+      await prisma.notification.create({
+        data: {
+          userId: receiverId,
+          title: 'Nova mensagem de chat',
+          message: notificationMessage,
+          type: 'CHAT',
+          relatedId: message.id
+        }
+      });
+
+      return NextResponse.json(messageWithAttachments, { status: 201 });
+    }
+
+    // Create notification for receiver (sem anexos)
     await prisma.notification.create({
       data: {
         userId: receiverId,

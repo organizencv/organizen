@@ -491,15 +491,18 @@ model Message {
 }
 
 model Attachment {
-  id                 String   @id @default(cuid())
+  id                 String       @id @default(cuid())
   fileName           String
   fileSize           Int
   mimeType           String
   cloud_storage_path String
   messageId          String?
-  createdAt          DateTime @default(now())
-  message            Message? @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  chatMessageId      String?      // NOVO: Relação com ChatMessage
+  createdAt          DateTime     @default(now())
+  message            Message?     @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  chatMessage        ChatMessage? @relation(fields: [chatMessageId], references: [id], onDelete: Cascade)
 
+  @@index([chatMessageId])
   @@map("attachments")
 }
 
@@ -636,14 +639,15 @@ enum NotificationType {
 
 // Chat em Tempo Real
 model ChatMessage {
-  id         String   @id @default(cuid())
-  content    String
-  read       Boolean  @default(false)
-  senderId   String
-  receiverId String
-  companyId  String
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  id          String       @id @default(cuid())
+  content     String
+  read        Boolean      @default(false)
+  senderId    String
+  receiverId  String
+  companyId   String
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  attachments Attachment[] // NOVO: Relação com anexos
 
   @@map("chat_messages")
   @@index([senderId, receiverId])
