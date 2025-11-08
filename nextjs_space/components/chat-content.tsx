@@ -9,8 +9,9 @@ import { Badge } from './ui/badge';
 import { Input } from './ui/input';
 import { ScrollArea } from './ui/scroll-area';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
+import { Dialog, DialogContent } from './ui/dialog';
 import { getTranslation, Language } from '@/lib/i18n';
-import { MessageCircle, Search, Send, Circle, Clock, FileText, Download, X, Image as ImageIcon } from 'lucide-react';
+import { MessageCircle, Search, Send, Circle, Clock, FileText, Download, X, Image as ImageIcon, ZoomIn } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { motion, AnimatePresence } from 'framer-motion';
 import { format } from 'date-fns';
@@ -67,6 +68,7 @@ interface ChatContentProps {
 function AttachmentPreview({ attachment, isOwnMessage }: { attachment: Attachment; isOwnMessage: boolean }) {
   const [downloadUrl, setDownloadUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [showImageModal, setShowImageModal] = useState(false);
 
   const isImage = attachment.mimeType.startsWith('image/');
   
@@ -93,6 +95,10 @@ function AttachmentPreview({ attachment, isOwnMessage }: { attachment: Attachmen
     }
   };
 
+  const handleImageClick = () => {
+    setShowImageModal(true);
+  };
+
   const handleDownload = async () => {
     await fetchDownloadUrl();
     if (downloadUrl) {
@@ -110,28 +116,59 @@ function AttachmentPreview({ attachment, isOwnMessage }: { attachment: Attachmen
 
   if (isImage && downloadUrl) {
     return (
-      <div className="relative group cursor-pointer" onClick={handleDownload}>
-        <div className={cn(
-          "relative w-full max-w-xs rounded overflow-hidden",
-          "border-2",
-          isOwnMessage ? "border-blue-400" : "border-border"
-        )}>
-          <Image
-            src={downloadUrl}
-            alt={attachment.fileName}
-            width={300}
-            height={200}
-            className="object-cover w-full h-auto"
-            style={{ maxHeight: '300px' }}
-          />
+      <>
+        <div className="relative group cursor-pointer" onClick={handleImageClick}>
+          <div className={cn(
+            "relative w-full max-w-xs rounded overflow-hidden",
+            "border-2 transition-all",
+            isOwnMessage ? "border-blue-400 hover:border-blue-300" : "border-border hover:border-primary"
+          )}>
+            <Image
+              src={downloadUrl}
+              alt={attachment.fileName}
+              width={300}
+              height={200}
+              className="object-cover w-full h-auto"
+              style={{ maxHeight: '300px' }}
+            />
+            {/* Overlay ao hover */}
+            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-all flex items-center justify-center">
+              <ZoomIn className="h-8 w-8 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
+            </div>
+          </div>
+          <p className={cn(
+            "text-xs mt-1",
+            isOwnMessage ? "text-blue-100" : "text-muted-foreground"
+          )}>
+            {attachment.fileName} • {formatFileSize(attachment.fileSize)}
+          </p>
         </div>
-        <p className={cn(
-          "text-xs mt-1",
-          isOwnMessage ? "text-blue-100" : "text-muted-foreground"
-        )}>
-          {attachment.fileName} • {formatFileSize(attachment.fileSize)}
-        </p>
-      </div>
+
+        {/* Modal de visualização da imagem */}
+        <Dialog open={showImageModal} onOpenChange={setShowImageModal}>
+          <DialogContent className="max-w-4xl w-full">
+            <div className="relative w-full">
+              <Image
+                src={downloadUrl}
+                alt={attachment.fileName}
+                width={1200}
+                height={800}
+                className="object-contain w-full h-auto max-h-[80vh]"
+              />
+              <div className="mt-4 flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium">{attachment.fileName}</p>
+                  <p className="text-xs text-muted-foreground">{formatFileSize(attachment.fileSize)}</p>
+                </div>
+                <Button onClick={handleDownload} variant="outline" size="sm">
+                  <Download className="h-4 w-4 mr-2" />
+                  Download
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+      </>
     );
   }
 
@@ -179,6 +216,7 @@ export function ChatContent({ users, currentUserId, currentUserName, openUserId 
   const [isSending, setIsSending] = useState(false);
   const [pendingAttachments, setPendingAttachments] = useState<Attachment[]>([]); // NOVO
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
   const typingTimeoutRef = useRef<NodeJS.Timeout>();
   const pollingRef = useRef<NodeJS.Timeout>();
   const { toast } = useToast();
@@ -256,10 +294,29 @@ export function ChatContent({ users, currentUserId, currentUserName, openUserId 
     };
   }, [selectedUser]);
 
-  // Scroll to bottom when messages change
+  // Scroll to bottom when messages change - mas só se o usuário já estiver perto do fim
   useEffect(() => {
-    scrollToBottom();
+    // Aguardar o próximo tick para garantir que o DOM está atualizado
+    const timer = setTimeout(() => {
+      scrollToBottomIfNeeded();
+    }, 100);
+    
+    return () => clearTimeout(timer);
   }, [messages]);
+
+  const scrollToBottomIfNeeded = () => {
+    const container = messagesContainerRef.current;
+    if (!container) return;
+
+    // Verificar se o usuário está perto do fim (dentro de 150px do fim)
+    const scrollThreshold = 150;
+    const distanceFromBottom = container.scrollHeight - container.scrollTop - container.clientHeight;
+    
+    // Só fazer scroll se estiver perto do fim
+    if (distanceFromBottom < scrollThreshold) {
+      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -632,7 +689,7 @@ export function ChatContent({ users, currentUserId, currentUserName, openUserId 
 
               {/* Messages */}
               <ScrollArea className="flex-1 p-4">
-                <div className="space-y-4">
+                <div className="space-y-4" ref={messagesContainerRef}>
                   {messages.length === 0 ? (
                     <div className="text-center py-12">
                       <MessageCircle className="h-12 w-12 text-gray-300 mx-auto mb-4" />
