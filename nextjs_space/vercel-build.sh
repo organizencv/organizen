@@ -13,6 +13,11 @@ yarn prisma db push --accept-data-loss --skip-generate || {
 echo "=== PRISMA GENERATE ==="
 yarn prisma generate
 
+echo "=== MIGRATE CHAT ATTACHMENTS ==="
+yarn tsx scripts/migrate-chat-attachments.ts || {
+  echo "⚠️  Migration failed, continuing anyway..."
+}
+
 echo "=== NEXT BUILD ==="
 yarn next build
 
