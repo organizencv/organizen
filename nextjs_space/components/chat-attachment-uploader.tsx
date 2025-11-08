@@ -17,17 +17,18 @@ interface Attachment {
 }
 
 interface ChatAttachmentUploaderProps {
+  attachments: Attachment[]; // CONTROLLED: recebe do pai
   onAttachmentsChange: (attachments: Attachment[]) => void;
   maxFiles?: number;
   maxFileSize?: number; // em bytes
 }
 
 export function ChatAttachmentUploader({ 
+  attachments, // CONTROLLED: recebe do pai
   onAttachmentsChange, 
   maxFiles = 5,
   maxFileSize = 5 * 1024 * 1024 // 5MB default
 }: ChatAttachmentUploaderProps) {
-  const [attachments, setAttachments] = useState<Attachment[]>([]);
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -110,8 +111,8 @@ export function ChatAttachmentUploader({
 
       const attachment: Attachment = await response.json();
       
+      // Atualizar anexos no pai
       const newAttachments = [...attachments, attachment];
-      setAttachments(newAttachments);
       onAttachmentsChange(newAttachments);
 
       toast({
@@ -136,7 +137,6 @@ export function ChatAttachmentUploader({
 
   const removeAttachment = (attachmentId: string) => {
     const newAttachments = attachments.filter(a => a.id !== attachmentId);
-    setAttachments(newAttachments);
     onAttachmentsChange(newAttachments);
   };
 

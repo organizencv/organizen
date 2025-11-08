@@ -715,6 +715,7 @@ export function ChatContent({ users, currentUserId, currentUserName, openUserId 
               <div className="p-4 border-t space-y-3">
                 {/* Uploader de anexos */}
                 <ChatAttachmentUploader
+                  attachments={pendingAttachments}
                   onAttachmentsChange={setPendingAttachments}
                   maxFiles={5}
                   maxFileSize={5 * 1024 * 1024}
