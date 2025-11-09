@@ -688,11 +688,11 @@ export function ChatContent({ users, currentUserId, currentUserName, openUserId 
                 </div>
               </div>
 
-              {/* Messages */}
+              {/* Messages - Área com scroll isolado */}
               <div className="flex-1 relative overflow-hidden">
                 <div 
                   ref={messagesContainerRef}
-                  className="h-full overflow-y-auto p-4 scroll-smooth"
+                  className="absolute inset-0 overflow-y-auto p-4 scroll-smooth"
                 >
                   <div className="space-y-4">
                     {messages.length === 0 ? (
@@ -770,7 +770,6 @@ export function ChatContent({ users, currentUserId, currentUserName, openUserId 
                     </AnimatePresence>
                   )}
                   <div ref={messagesEndRef} />
-                </div>
                 </div>
               
                 {/* Botão flutuante para scroll ao fim (tipo WhatsApp) */}
