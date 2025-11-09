@@ -215,10 +215,12 @@ export function ChatContent({ users, currentUserId, currentUserName, openUserId 
   const [isTyping, setIsTyping] = useState(false);
   const [isSending, setIsSending] = useState(false);
   const [pendingAttachments, setPendingAttachments] = useState<Attachment[]>([]); // NOVO
+  const [userScrolling, setUserScrolling] = useState(false); // Rastreia se o usuário está fazendo scroll manual
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const typingTimeoutRef = useRef<NodeJS.Timeout>();
   const pollingRef = useRef<NodeJS.Timeout>();
+  const scrollTimeoutRef = useRef<NodeJS.Timeout>();
   const { toast } = useToast();
 
   useEffect(() => {
@@ -278,6 +280,9 @@ export function ChatContent({ users, currentUserId, currentUserName, openUserId 
   // Fetch messages when user is selected
   useEffect(() => {
     if (selectedUser) {
+      // Resetar flag de scroll ao abrir nova conversa para iniciar no fim
+      setUserScrolling(false);
+      
       fetchMessages(selectedUser.id);
       
       // Poll for new messages every 2 seconds
@@ -294,31 +299,69 @@ export function ChatContent({ users, currentUserId, currentUserName, openUserId 
     };
   }, [selectedUser]);
 
-  // Scroll to bottom when messages change - mas só se o usuário já estiver perto do fim
+  // Detectar quando o usuário está fazendo scroll manualmente
   useEffect(() => {
+    const container = messagesContainerRef.current;
+    if (!container) return;
+
+    const handleScroll = () => {
+      // Marcar que o usuário está fazendo scroll
+      setUserScrolling(true);
+
+      // Limpar timeout anterior
+      if (scrollTimeoutRef.current) {
+        clearTimeout(scrollTimeoutRef.current);
+      }
+
+      // Depois de 1 segundo sem scroll, considerar que o usuário parou
+      scrollTimeoutRef.current = setTimeout(() => {
+        const distanceFromBottom = container.scrollHeight - container.scrollTop - container.clientHeight;
+        
+        // Se estiver no fim (dentro de 50px), desativar flag de scroll manual
+        if (distanceFromBottom < 50) {
+          setUserScrolling(false);
+        }
+      }, 1000);
+    };
+
+    container.addEventListener('scroll', handleScroll);
+    return () => {
+      container.removeEventListener('scroll', handleScroll);
+      if (scrollTimeoutRef.current) {
+        clearTimeout(scrollTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  // Scroll to bottom when messages change - mas só se o usuário NÃO estiver navegando manualmente
+  useEffect(() => {
+    // Se o usuário está fazendo scroll manual, não fazer scroll automático
+    if (userScrolling) return;
+
     // Aguardar o próximo tick para garantir que o DOM está atualizado
     const timer = setTimeout(() => {
       scrollToBottomIfNeeded();
     }, 100);
     
     return () => clearTimeout(timer);
-  }, [messages]);
+  }, [messages, userScrolling]);
 
   const scrollToBottomIfNeeded = () => {
     const container = messagesContainerRef.current;
-    if (!container) return;
+    if (!container || userScrolling) return;
 
-    // Verificar se o usuário está perto do fim (dentro de 150px do fim)
-    const scrollThreshold = 150;
+    // Verificar se o usuário está no fim (dentro de 50px do fim)
+    const scrollThreshold = 50;
     const distanceFromBottom = container.scrollHeight - container.scrollTop - container.clientHeight;
     
-    // Só fazer scroll se estiver perto do fim
+    // Só fazer scroll se estiver muito perto do fim
     if (distanceFromBottom < scrollThreshold) {
       messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     }
   };
 
   const scrollToBottom = () => {
+    setUserScrolling(false); // Resetar flag quando fazer scroll programático
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
@@ -369,6 +412,9 @@ export function ChatContent({ users, currentUserId, currentUserName, openUserId 
         setMessages([...messages, message]);
         setNewMessage('');
         setPendingAttachments([]); // Limpar anexos após envio
+        
+        // Resetar flag de scroll manual para permitir scroll após envio
+        setUserScrolling(false);
         
         // Update typing status
         await updateTypingStatus(false);
