@@ -11,7 +11,7 @@ import { ScrollArea } from './ui/scroll-area';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 import { Dialog, DialogContent } from './ui/dialog';
 import { getTranslation, Language } from '@/lib/i18n';
-import { MessageCircle, Search, Send, Circle, Clock, FileText, Download, X, Image as ImageIcon, ZoomIn } from 'lucide-react';
+import { MessageCircle, Search, Send, Circle, Clock, FileText, Download, X, Image as ImageIcon, ZoomIn, ChevronDown } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { motion, AnimatePresence } from 'framer-motion';
 import { format } from 'date-fns';
@@ -215,6 +215,7 @@ export function ChatContent({ users, currentUserId, currentUserName, openUserId 
   const [isTyping, setIsTyping] = useState(false);
   const [isSending, setIsSending] = useState(false);
   const [pendingAttachments, setPendingAttachments] = useState<Attachment[]>([]); // NOVO
+  const [showScrollButton, setShowScrollButton] = useState(false); // Mostrar botão de scroll
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const typingTimeoutRef = useRef<NodeJS.Timeout>();
@@ -294,9 +295,32 @@ export function ChatContent({ users, currentUserId, currentUserName, openUserId 
     };
   }, [selectedUser]);
 
+  // Detectar posição do scroll para mostrar/esconder botão
+  useEffect(() => {
+    const container = messagesContainerRef.current;
+    if (!container) return;
+
+    const handleScroll = () => {
+      const scrollThreshold = 200; // Mostrar botão se estiver mais de 200px do fim
+      const distanceFromBottom = container.scrollHeight - container.scrollTop - container.clientHeight;
+      setShowScrollButton(distanceFromBottom > scrollThreshold);
+    };
+
+    // Adicionar listener de scroll no container
+    container.addEventListener('scroll', handleScroll);
+    
+    // Verificar posição inicial
+    handleScroll();
+
+    return () => {
+      container.removeEventListener('scroll', handleScroll);
+    };
+  }, [messages]); // Recalcular quando mensagens mudarem
+
   // Função manual para ir para o fim (apenas quando o usuário clicar explicitamente)
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    setShowScrollButton(false); // Esconder botão após scroll
   };
 
   const fetchConversations = async () => {
@@ -665,18 +689,22 @@ export function ChatContent({ users, currentUserId, currentUserName, openUserId 
               </div>
 
               {/* Messages */}
-              <ScrollArea className="flex-1 p-4">
-                <div className="space-y-4" ref={messagesContainerRef}>
-                  {messages.length === 0 ? (
-                    <div className="text-center py-12">
-                      <MessageCircle className="h-12 w-12 text-gray-300 mx-auto mb-4" />
-                      <p className="text-muted-foreground text-sm">
-                        {getTranslation('noMessages', language)}
-                      </p>
-                    </div>
-                  ) : (
-                    <AnimatePresence>
-                      {messages.map((message, index) => {
+              <div className="flex-1 relative overflow-hidden">
+                <div 
+                  ref={messagesContainerRef}
+                  className="h-full overflow-y-auto p-4 scroll-smooth"
+                >
+                  <div className="space-y-4">
+                    {messages.length === 0 ? (
+                      <div className="text-center py-12">
+                        <MessageCircle className="h-12 w-12 text-gray-300 mx-auto mb-4" />
+                        <p className="text-muted-foreground text-sm">
+                          {getTranslation('noMessages', language)}
+                        </p>
+                      </div>
+                    ) : (
+                      <AnimatePresence>
+                        {messages.map((message, index) => {
                         const isOwnMessage = message.senderId === currentUserId;
                         const showDate = index === 0 || 
                           new Date(messages[index - 1].createdAt).toDateString() !== new Date(message.createdAt).toDateString();
@@ -743,7 +771,24 @@ export function ChatContent({ users, currentUserId, currentUserName, openUserId 
                   )}
                   <div ref={messagesEndRef} />
                 </div>
-              </ScrollArea>
+                </div>
+              
+                {/* Botão flutuante para scroll ao fim (tipo WhatsApp) */}
+                <AnimatePresence>
+                  {showScrollButton && (
+                    <motion.button
+                      initial={{ opacity: 0, scale: 0.8 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      exit={{ opacity: 0, scale: 0.8 }}
+                      onClick={scrollToBottom}
+                      className="absolute bottom-4 right-4 z-10 bg-primary hover:bg-primary/90 text-primary-foreground rounded-full p-3 shadow-lg transition-colors flex items-center justify-center"
+                      title={language === 'pt' ? 'Ir para o fim' : 'Go to bottom'}
+                    >
+                      <ChevronDown className="h-5 w-5" />
+                    </motion.button>
+                  )}
+                </AnimatePresence>
+              </div>
 
               {/* Message Input */}
               <div className="p-4 border-t space-y-3">
