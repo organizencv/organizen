@@ -592,14 +592,15 @@ export function ChatContent({ users, currentUserId, currentUserName, openUserId 
                                   <p className="text-sm break-words">{message.content}</p>
                                 )}
                                 
-                                {/* Exibir imagens anexadas */}
+                                {/* Exibir anexos (imagens, vídeos, áudio) */}
                                 {message.attachments && message.attachments.length > 0 && (
                                   <div className="mt-2 space-y-2">
                                     {message.attachments.map((attachment) => (
                                       <div key={attachment.id}>
+                                        {/* Imagem */}
                                         {attachment.mimeType.startsWith('image/') && attachment.downloadUrl && (
                                           <div 
-                                            className="relative aspect-video bg-muted rounded-md overflow-hidden cursor-pointer hover:opacity-90 transition-opacity"
+                                            className="relative aspect-video bg-muted rounded-md overflow-hidden cursor-pointer hover:opacity-90 transition-opacity max-w-sm"
                                             onClick={() => setSelectedImage(attachment.downloadUrl || null)}
                                           >
                                             <Image
@@ -609,6 +610,40 @@ export function ChatContent({ users, currentUserId, currentUserName, openUserId 
                                               className="object-cover"
                                               sizes="(max-width: 768px) 100vw, 400px"
                                             />
+                                          </div>
+                                        )}
+                                        
+                                        {/* Vídeo */}
+                                        {attachment.mimeType.startsWith('video/') && attachment.downloadUrl && (
+                                          <div className="max-w-sm">
+                                            <video 
+                                              controls 
+                                              className="w-full rounded-md bg-black"
+                                              preload="metadata"
+                                            >
+                                              <source src={attachment.downloadUrl} type={attachment.mimeType} />
+                                              O seu navegador não suporta reprodução de vídeo.
+                                            </video>
+                                            <p className="text-xs text-muted-foreground mt-1">
+                                              {attachment.fileName}
+                                            </p>
+                                          </div>
+                                        )}
+                                        
+                                        {/* Áudio */}
+                                        {attachment.mimeType.startsWith('audio/') && attachment.downloadUrl && (
+                                          <div className="max-w-sm">
+                                            <audio 
+                                              controls 
+                                              className="w-full"
+                                              preload="metadata"
+                                            >
+                                              <source src={attachment.downloadUrl} type={attachment.mimeType} />
+                                              O seu navegador não suporta reprodução de áudio.
+                                            </audio>
+                                            <p className="text-xs text-muted-foreground mt-1">
+                                              {attachment.fileName}
+                                            </p>
                                           </div>
                                         )}
                                       </div>

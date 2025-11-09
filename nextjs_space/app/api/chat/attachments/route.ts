@@ -6,18 +6,25 @@ import { prisma } from '@/lib/db';
 import { uploadFile, getDownloadUrl } from '@/lib/s3';
 
 // Configurações de upload
-const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB para Fase 1 (MVP)
-const ALLOWED_TYPES_PHASE1 = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/gif'];
-const ALLOWED_TYPES_PHASE2 = [
-  ...ALLOWED_TYPES_PHASE1,
-  'video/mp4', 'video/webm',
-  'audio/mpeg', 'audio/mp3', 'audio/webm',
-  'application/pdf',
-  'application/msword',
-  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-  'application/vnd.ms-excel',
-  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-];
+const ALLOWED_TYPES = {
+  images: ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/gif'],
+  videos: ['video/mp4', 'video/webm', 'video/quicktime'],
+  audio: ['audio/mpeg', 'audio/mp3', 'audio/mp4', 'audio/webm', 'audio/ogg', 'audio/wav']
+};
+
+const MAX_FILE_SIZE = {
+  image: 5 * 1024 * 1024,   // 5MB (será comprimido para ~1MB no client)
+  video: 50 * 1024 * 1024,  // 50MB
+  audio: 10 * 1024 * 1024   // 10MB
+};
+
+// Helper para determinar categoria do ficheiro
+function getFileCategory(mimeType: string): 'image' | 'video' | 'audio' | null {
+  if (ALLOWED_TYPES.images.includes(mimeType)) return 'image';
+  if (ALLOWED_TYPES.videos.includes(mimeType)) return 'video';
+  if (ALLOWED_TYPES.audio.includes(mimeType)) return 'audio';
+  return null;
+}
 
 // POST: Upload de anexo
 export async function POST(request: NextRequest) {
@@ -36,16 +43,20 @@ export async function POST(request: NextRequest) {
     }
 
     // Validar tipo de ficheiro
-    if (!ALLOWED_TYPES_PHASE1.includes(file.type)) {
+    const category = getFileCategory(file.type);
+    if (!category) {
       return NextResponse.json({ 
-        error: `Tipo de ficheiro não suportado: ${file.type}. Tipos permitidos: imagens (jpg, png, webp, gif)` 
+        error: `Tipo de ficheiro não suportado: ${file.type}. Tipos permitidos: imagens, vídeos (mp4, webm) e áudio (mp3, ogg, wav)` 
       }, { status: 400 });
     }
 
-    // Validar tamanho
-    if (file.size > MAX_FILE_SIZE) {
+    // Validar tamanho baseado na categoria
+    const maxSize = MAX_FILE_SIZE[category];
+    if (file.size > maxSize) {
+      const maxSizeMB = (maxSize / 1024 / 1024).toFixed(0);
+      const fileSizeMB = (file.size / 1024 / 1024).toFixed(2);
       return NextResponse.json({ 
-        error: `Ficheiro muito grande (${(file.size / 1024 / 1024).toFixed(2)}MB). Tamanho máximo: 5MB` 
+        error: `Ficheiro muito grande (${fileSizeMB}MB). Tamanho máximo para ${category === 'image' ? 'imagens' : category === 'video' ? 'vídeos' : 'áudio'}: ${maxSizeMB}MB` 
       }, { status: 400 });
     }
 

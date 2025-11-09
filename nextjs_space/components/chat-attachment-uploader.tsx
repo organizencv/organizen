@@ -3,10 +3,11 @@
 
 import { useState, useRef } from 'react';
 import { Button } from './ui/button';
-import { Paperclip, X, Image, FileText, Loader2 } from 'lucide-react';
+import { Paperclip, X, Image, FileText, Loader2, Video, Music } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Progress } from './ui/progress';
 import { cn } from '@/lib/utils';
+import imageCompression from 'browser-image-compression';
 
 interface Attachment {
   id: string;
@@ -42,7 +43,13 @@ export function ChatAttachmentUploader({
 
   const getFileIcon = (mimeType: string) => {
     if (mimeType.startsWith('image/')) {
-      return <Image className="h-4 w-4" />;
+      return <Image className="h-4 w-4 text-blue-500" />;
+    }
+    if (mimeType.startsWith('video/')) {
+      return <Video className="h-4 w-4 text-purple-500" />;
+    }
+    if (mimeType.startsWith('audio/')) {
+      return <Music className="h-4 w-4 text-green-500" />;
     }
     return <FileText className="h-4 w-4" />;
   };
@@ -88,10 +95,47 @@ export function ChatAttachmentUploader({
     setUploadProgress(0);
 
     try {
-      const formData = new FormData();
-      formData.append('file', file);
+      let fileToUpload = file;
 
-      // Simular progresso (em produção, usar XMLHttpRequest para progresso real)
+      // 🔥 COMPRESSÃO AUTOMÁTICA DE IMAGENS
+      if (file.type.startsWith('image/')) {
+        try {
+          setUploadProgress(10);
+          
+          const options = {
+            maxSizeMB: 1,              // Comprimir para ~1MB
+            maxWidthOrHeight: 1920,    // Máximo 1920px
+            useWebWorker: true,
+            fileType: file.type,
+            initialQuality: 0.85       // 85% de qualidade
+          };
+
+          console.log('🖼️ Comprimindo imagem:', file.name, `(${formatFileSize(file.size)})`);
+          
+          const compressedFile = await imageCompression(file, options);
+          
+          console.log('✅ Imagem comprimida:', 
+            `${formatFileSize(file.size)} → ${formatFileSize(compressedFile.size)}`,
+            `(${((1 - compressedFile.size / file.size) * 100).toFixed(0)}% redução)`
+          );
+
+          fileToUpload = new File([compressedFile], file.name, {
+            type: file.type,
+            lastModified: Date.now()
+          });
+
+          setUploadProgress(30);
+
+        } catch (compressionError) {
+          console.warn('⚠️ Erro ao comprimir, usando ficheiro original:', compressionError);
+          // Continuar com ficheiro original se compressão falhar
+        }
+      }
+
+      const formData = new FormData();
+      formData.append('file', fileToUpload);
+
+      // Simular progresso
       const progressInterval = setInterval(() => {
         setUploadProgress((prev) => Math.min(prev + 10, 90));
       }, 200);
@@ -117,7 +161,9 @@ export function ChatAttachmentUploader({
 
       toast({
         title: 'Ficheiro carregado',
-        description: `${file.name} foi carregado com sucesso`
+        description: file.type.startsWith('image/') && fileToUpload.size < file.size
+          ? `${file.name} foi comprimido e carregado (${formatFileSize(fileToUpload.size)})`
+          : `${file.name} foi carregado com sucesso`
       });
 
     } catch (error: any) {
@@ -148,7 +194,7 @@ export function ChatAttachmentUploader({
           ref={fileInputRef}
           type="file"
           multiple
-          accept="image/jpeg,image/jpg,image/png,image/webp,image/gif"
+          accept="image/*,video/mp4,video/webm,video/quicktime,audio/*"
           onChange={handleFileSelect}
           className="hidden"
           disabled={uploading || attachments.length >= maxFiles}
