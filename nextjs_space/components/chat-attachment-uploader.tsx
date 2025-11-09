@@ -21,14 +21,19 @@ interface ChatAttachmentUploaderProps {
   attachments: Attachment[]; // CONTROLLED: recebe do pai
   onAttachmentsChange: (attachments: Attachment[]) => void;
   maxFiles?: number;
-  maxFileSize?: number; // em bytes
 }
+
+// Limites por tipo de ficheiro (alinhados com o backend)
+const MAX_FILE_SIZE = {
+  image: 5 * 1024 * 1024,   // 5MB
+  video: 50 * 1024 * 1024,  // 50MB
+  audio: 10 * 1024 * 1024   // 10MB
+};
 
 export function ChatAttachmentUploader({ 
   attachments, // CONTROLLED: recebe do pai
   onAttachmentsChange, 
-  maxFiles = 5,
-  maxFileSize = 5 * 1024 * 1024 // 5MB default
+  maxFiles = 5
 }: ChatAttachmentUploaderProps) {
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
@@ -39,6 +44,20 @@ export function ChatAttachmentUploader({
     if (bytes < 1024) return `${bytes} B`;
     if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
     return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
+  };
+
+  // Helper para determinar categoria e limite do ficheiro
+  const getFileCategory = (mimeType: string): { category: 'image' | 'video' | 'audio' | null, maxSize: number } => {
+    if (mimeType.startsWith('image/')) {
+      return { category: 'image', maxSize: MAX_FILE_SIZE.image };
+    }
+    if (mimeType.startsWith('video/')) {
+      return { category: 'video', maxSize: MAX_FILE_SIZE.video };
+    }
+    if (mimeType.startsWith('audio/')) {
+      return { category: 'audio', maxSize: MAX_FILE_SIZE.audio };
+    }
+    return { category: null, maxSize: 0 };
   };
 
   const getFileIcon = (mimeType: string) => {
@@ -69,12 +88,26 @@ export function ChatAttachmentUploader({
       return;
     }
 
-    // Validar cada ficheiro
+    // Validar e fazer upload de cada ficheiro
     for (const file of files) {
-      if (file.size > maxFileSize) {
+      const { category, maxSize } = getFileCategory(file.type);
+
+      // Validar tipo de ficheiro
+      if (!category) {
+        toast({
+          title: 'Tipo não suportado',
+          description: `${file.name}: tipo de ficheiro não suportado`,
+          variant: 'destructive'
+        });
+        continue;
+      }
+
+      // Validar tamanho baseado na categoria
+      if (file.size > maxSize) {
+        const categoryName = category === 'image' ? 'imagens' : category === 'video' ? 'vídeos' : 'áudio';
         toast({
           title: 'Ficheiro muito grande',
-          description: `${file.name} excede o tamanho máximo de ${formatFileSize(maxFileSize)}`,
+          description: `${file.name} (${formatFileSize(file.size)}) excede o limite de ${formatFileSize(maxSize)} para ${categoryName}`,
           variant: 'destructive'
         });
         continue;
@@ -159,11 +192,20 @@ export function ChatAttachmentUploader({
       const newAttachments = [...attachments, attachment];
       onAttachmentsChange(newAttachments);
 
+      // Mensagem de sucesso baseada no tipo
+      const { category } = getFileCategory(file.type);
+      const successMessage = 
+        category === 'image' && fileToUpload.size < file.size
+          ? `${file.name} foi comprimido e carregado (${formatFileSize(fileToUpload.size)})`
+          : category === 'video'
+          ? `Vídeo ${file.name} carregado com sucesso (${formatFileSize(file.size)})`
+          : category === 'audio'
+          ? `Áudio ${file.name} carregado com sucesso (${formatFileSize(file.size)})`
+          : `${file.name} foi carregado com sucesso`;
+
       toast({
         title: 'Ficheiro carregado',
-        description: file.type.startsWith('image/') && fileToUpload.size < file.size
-          ? `${file.name} foi comprimido e carregado (${formatFileSize(fileToUpload.size)})`
-          : `${file.name} foi carregado com sucesso`
+        description: successMessage
       });
 
     } catch (error: any) {
