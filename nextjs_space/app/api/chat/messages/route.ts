@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/db';
+import { getDownloadUrl } from '@/lib/s3';
 
 // GET: Fetch chat messages with a specific user
 export async function GET(request: NextRequest) {
@@ -47,6 +48,28 @@ export async function GET(request: NextRequest) {
       });
       console.log('[CHAT] 5. ✓ Mensagens encontradas:', messages.length);
 
+      // Gerar downloadUrls para attachments
+      const messagesWithUrls = await Promise.all(
+        messages.map(async (message) => {
+          if (message.attachments && message.attachments.length > 0) {
+            const attachmentsWithUrls = await Promise.all(
+              message.attachments.map(async (attachment) => {
+                try {
+                  const downloadUrl = await getDownloadUrl(attachment.cloud_storage_path);
+                  return { ...attachment, downloadUrl };
+                } catch (error) {
+                  console.error('[CHAT] Erro ao gerar URL para attachment:', attachment.id, error);
+                  return { ...attachment, downloadUrl: null };
+                }
+              })
+            );
+            return { ...message, attachments: attachmentsWithUrls };
+          }
+          return message;
+        })
+      );
+      console.log('[CHAT] 5.5. ✓ URLs de download geradas');
+
       // Mark messages as read
       await prisma.chatMessage.updateMany({
         where: {
@@ -58,7 +81,7 @@ export async function GET(request: NextRequest) {
       });
       console.log('[CHAT] 6. ✓ Mensagens marcadas como lidas');
 
-      return NextResponse.json(messages);
+      return NextResponse.json(messagesWithUrls);
     } catch (prismaError: any) {
       console.error('[CHAT] ❌ Erro no Prisma:', prismaError.message);
       console.error('[CHAT] Stack:', prismaError.stack);
@@ -138,6 +161,23 @@ export async function POST(request: NextRequest) {
           include: { attachments: true }
         });
         console.log('[CHAT] 8. ✓ Mensagem recarregada com anexos');
+
+        // Gerar downloadUrls para attachments
+        if (messageWithAttachments && messageWithAttachments.attachments && messageWithAttachments.attachments.length > 0) {
+          const attachmentsWithUrls = await Promise.all(
+            messageWithAttachments.attachments.map(async (attachment) => {
+              try {
+                const downloadUrl = await getDownloadUrl(attachment.cloud_storage_path);
+                return { ...attachment, downloadUrl };
+              } catch (error) {
+                console.error('[CHAT] Erro ao gerar URL para attachment:', attachment.id, error);
+                return { ...attachment, downloadUrl: null };
+              }
+            })
+          );
+          messageWithAttachments.attachments = attachmentsWithUrls as any;
+        }
+        console.log('[CHAT] 8.5. ✓ URLs de download geradas');
 
         // Criar notificação
         const hasAttachments = messageWithAttachments?.attachments && messageWithAttachments.attachments.length > 0;
