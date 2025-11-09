@@ -16,6 +16,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { ChatAttachmentUploader } from './chat-attachment-uploader';
+import { BackButton } from './back-button';
 import Image from 'next/image';
 
 interface User {
@@ -327,14 +328,22 @@ export function ChatContent({ users, currentUserId, currentUserName, openUserId 
   return (
     <div className="h-[calc(100vh-8rem)]">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
-        <div>
-          <h1 className="text-3xl font-bold text-foreground flex items-center gap-3">
-            <MessageCircle className="h-8 w-8 text-primary" />
-            {getTranslation('chat', language)}
-          </h1>
-          <p className="text-muted-foreground mt-1">
-            {getTranslation('chatConversations', language)}
-          </p>
+        <div className="flex items-center gap-4 w-full">
+          <BackButton 
+            fallbackRoute="/dashboard" 
+            label={language === 'pt' ? 'Voltar' : 'Back'}
+            variant="ghost"
+            showOnlyInPWA={true}
+          />
+          <div className="flex-1">
+            <h1 className="text-3xl font-bold text-foreground flex items-center gap-3">
+              <MessageCircle className="h-8 w-8 text-primary" />
+              {getTranslation('chat', language)}
+            </h1>
+            <p className="text-muted-foreground mt-1">
+              {getTranslation('chatConversations', language)}
+            </p>
+          </div>
         </div>
       </div>
 
@@ -620,12 +629,14 @@ export function ChatContent({ users, currentUserId, currentUserName, openUserId 
                                               controls 
                                               className="w-full rounded-md bg-black"
                                               preload="metadata"
+                                              playsInline
+                                              controlsList="nodownload"
                                             >
                                               <source src={attachment.downloadUrl} type={attachment.mimeType} />
                                               O seu navegador não suporta reprodução de vídeo.
                                             </video>
                                             <p className="text-xs text-muted-foreground mt-1">
-                                              {attachment.fileName}
+                                              📹 {attachment.fileName} ({(attachment.fileSize / 1024 / 1024).toFixed(1)} MB)
                                             </p>
                                           </div>
                                         )}
@@ -637,12 +648,13 @@ export function ChatContent({ users, currentUserId, currentUserName, openUserId 
                                               controls 
                                               className="w-full"
                                               preload="metadata"
+                                              controlsList="nodownload"
                                             >
                                               <source src={attachment.downloadUrl} type={attachment.mimeType} />
                                               O seu navegador não suporta reprodução de áudio.
                                             </audio>
                                             <p className="text-xs text-muted-foreground mt-1">
-                                              {attachment.fileName}
+                                              🎵 {attachment.fileName} ({(attachment.fileSize / 1024 / 1024).toFixed(1)} MB)
                                             </p>
                                           </div>
                                         )}
