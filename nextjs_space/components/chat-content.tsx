@@ -15,6 +15,8 @@ import { useToast } from '@/hooks/use-toast';
 import { motion, AnimatePresence } from 'framer-motion';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
+import { ChatAttachmentUploader } from './chat-attachment-uploader';
+import Image from 'next/image';
 
 interface User {
   id: string;
@@ -24,6 +26,15 @@ interface User {
   image?: string | null;
 }
 
+interface ChatAttachment {
+  id: string;
+  fileName: string;
+  fileSize: number;
+  mimeType: string;
+  cloud_storage_path: string;
+  downloadUrl?: string;
+}
+
 interface ChatMessage {
   id: string;
   content: string;
@@ -31,6 +42,7 @@ interface ChatMessage {
   receiverId: string;
   read: boolean;
   createdAt: string;
+  attachments?: ChatAttachment[];
 }
 
 interface Conversation {
@@ -61,6 +73,8 @@ export function ChatContent({ users, currentUserId, currentUserName, openUserId 
   const [searchTerm, setSearchTerm] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const [isSending, setIsSending] = useState(false);
+  const [attachments, setAttachments] = useState<ChatAttachment[]>([]);
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const [showScrollButton, setShowScrollButton] = useState(false);
@@ -126,6 +140,7 @@ export function ChatContent({ users, currentUserId, currentUserName, openUserId 
   useEffect(() => {
     if (selectedUser) {
       fetchMessages(selectedUser.id);
+      setAttachments([]); // Limpar attachments ao mudar de conversa
       
       // Poll for new messages every 2 seconds
       if (pollingRef.current) {
@@ -191,7 +206,7 @@ export function ChatContent({ users, currentUserId, currentUserName, openUserId 
   };
 
   const sendMessage = async () => {
-    if (!newMessage.trim() || !selectedUser || isSending) return;
+    if ((!newMessage.trim() && attachments.length === 0) || !selectedUser || isSending) return;
 
     setIsSending(true);
     try {
@@ -200,7 +215,8 @@ export function ChatContent({ users, currentUserId, currentUserName, openUserId 
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           receiverId: selectedUser.id,
-          content: newMessage.trim()
+          content: newMessage.trim(),
+          attachmentIds: attachments.map(a => a.id)
         })
       });
 
@@ -208,6 +224,7 @@ export function ChatContent({ users, currentUserId, currentUserName, openUserId 
         const message = await response.json();
         setMessages([...messages, message]);
         setNewMessage('');
+        setAttachments([]);
         
         // Update typing status
         await updateTypingStatus(false);
@@ -571,7 +588,34 @@ export function ChatContent({ users, currentUserId, currentUserName, openUserId 
                                     : 'bg-muted text-foreground'
                                 )}
                               >
-                                <p className="text-sm break-words">{message.content}</p>
+                                {message.content && (
+                                  <p className="text-sm break-words">{message.content}</p>
+                                )}
+                                
+                                {/* Exibir imagens anexadas */}
+                                {message.attachments && message.attachments.length > 0 && (
+                                  <div className="mt-2 space-y-2">
+                                    {message.attachments.map((attachment) => (
+                                      <div key={attachment.id}>
+                                        {attachment.mimeType.startsWith('image/') && attachment.downloadUrl && (
+                                          <div 
+                                            className="relative aspect-video bg-muted rounded-md overflow-hidden cursor-pointer hover:opacity-90 transition-opacity"
+                                            onClick={() => setSelectedImage(attachment.downloadUrl || null)}
+                                          >
+                                            <Image
+                                              src={attachment.downloadUrl}
+                                              alt={attachment.fileName}
+                                              fill
+                                              className="object-cover"
+                                              sizes="(max-width: 768px) 100vw, 400px"
+                                            />
+                                          </div>
+                                        )}
+                                      </div>
+                                    ))}
+                                  </div>
+                                )}
+                                
                                 <span 
                                   className={cn(
                                     'text-xs mt-1 block',
@@ -610,29 +654,66 @@ export function ChatContent({ users, currentUserId, currentUserName, openUserId 
 
               {/* Message Input */}
               <div className="p-4 border-t">
-                <div className="flex gap-2">
-                  <Input
-                    value={newMessage}
-                    onChange={(e) => handleTyping(e.target.value)}
-                    onKeyPress={handleKeyPress}
-                    placeholder={getTranslation('typeMessage', language)}
-                    className="flex-1"
-                    disabled={isSending}
+                <div className="space-y-2">
+                  {/* Attachment Uploader */}
+                  <ChatAttachmentUploader 
+                    attachments={attachments}
+                    onAttachmentsChange={setAttachments}
                   />
-                  <Button 
-                    onClick={sendMessage}
-                    disabled={!newMessage.trim() || isSending}
-                    className="gap-2"
-                  >
-                    <Send className="h-4 w-4" />
-                    {getTranslation('sendMessage', language)}
-                  </Button>
+                  
+                  <div className="flex gap-2">
+                    <Input
+                      value={newMessage}
+                      onChange={(e) => handleTyping(e.target.value)}
+                      onKeyPress={handleKeyPress}
+                      placeholder={getTranslation('typeMessage', language)}
+                      className="flex-1"
+                      disabled={isSending}
+                    />
+                    <Button 
+                      onClick={sendMessage}
+                      disabled={(!newMessage.trim() && attachments.length === 0) || isSending}
+                      className="gap-2"
+                    >
+                      <Send className="h-4 w-4" />
+                      {getTranslation('sendMessage', language)}
+                    </Button>
+                  </div>
                 </div>
               </div>
             </>
           )}
         </Card>
       </div>
+      
+      {/* Modal para visualizar imagens */}
+      {selectedImage && (
+        <div 
+          className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4"
+          onClick={() => setSelectedImage(null)}
+        >
+          <div className="relative max-w-4xl max-h-[90vh] w-full h-full">
+            <Image
+              src={selectedImage}
+              alt="Imagem ampliada"
+              fill
+              className="object-contain"
+              sizes="(max-width: 1200px) 100vw, 1200px"
+            />
+            <Button
+              variant="secondary"
+              size="sm"
+              className="absolute top-4 right-4"
+              onClick={(e) => {
+                e.stopPropagation();
+                setSelectedImage(null);
+              }}
+            >
+              {language === 'pt' ? 'Fechar' : 'Close'}
+            </Button>
+          </div>
+        </div>
+      )}
     </div>
   );
     }
