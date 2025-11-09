@@ -9,16 +9,12 @@ import { Badge } from './ui/badge';
 import { Input } from './ui/input';
 import { ScrollArea } from './ui/scroll-area';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
-import { Dialog, DialogContent } from './ui/dialog';
 import { getTranslation, Language } from '@/lib/i18n';
-import { MessageCircle, Search, Send, Circle, Clock, FileText, Download, X, Image as ImageIcon, ZoomIn, ChevronDown } from 'lucide-react';
+import { MessageCircle, Search, Send, Circle, Clock, ChevronDown } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { motion, AnimatePresence } from 'framer-motion';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
-import { BackButton } from './back-button';
-import { ChatAttachmentUploader } from './chat-attachment-uploader';
-import Image from 'next/image';
 
 interface User {
   id: string;
@@ -28,14 +24,6 @@ interface User {
   image?: string | null;
 }
 
-interface Attachment {
-  id: string;
-  fileName: string;
-  fileSize: number;
-  mimeType: string;
-  cloud_storage_path: string;
-}
-
 interface ChatMessage {
   id: string;
   content: string;
@@ -43,7 +31,6 @@ interface ChatMessage {
   receiverId: string;
   read: boolean;
   createdAt: string;
-  attachments?: Attachment[];
 }
 
 interface Conversation {
@@ -64,146 +51,6 @@ interface ChatContentProps {
   openUserId?: string;
 }
 
-// Componente para preview de anexos
-function AttachmentPreview({ attachment, isOwnMessage }: { attachment: Attachment; isOwnMessage: boolean }) {
-  const [downloadUrl, setDownloadUrl] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [showImageModal, setShowImageModal] = useState(false);
-
-  const isImage = attachment.mimeType.startsWith('image/');
-  
-  const formatFileSize = (bytes: number): string => {
-    if (bytes < 1024) return `${bytes} B`;
-    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-    return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
-  };
-
-  const fetchDownloadUrl = async () => {
-    if (downloadUrl || loading) return;
-    
-    setLoading(true);
-    try {
-      const response = await fetch(`/api/chat/attachments?id=${attachment.id}`);
-      if (response.ok) {
-        const data = await response.json();
-        setDownloadUrl(data.downloadUrl);
-      }
-    } catch (error) {
-      console.error('Error fetching download URL:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleImageClick = () => {
-    setShowImageModal(true);
-  };
-
-  const handleDownload = async () => {
-    await fetchDownloadUrl();
-    if (downloadUrl) {
-      // Abrir em nova aba para download
-      window.open(downloadUrl, '_blank');
-    }
-  };
-
-  // Para imagens, carregar URL automaticamente
-  useEffect(() => {
-    if (isImage) {
-      fetchDownloadUrl();
-    }
-  }, [isImage]);
-
-  if (isImage && downloadUrl) {
-    return (
-      <>
-        <div className="relative group cursor-pointer" onClick={handleImageClick}>
-          <div className={cn(
-            "relative w-full max-w-xs rounded overflow-hidden",
-            "border-2 transition-all",
-            isOwnMessage ? "border-blue-400 hover:border-blue-300" : "border-border hover:border-primary"
-          )}>
-            <Image
-              src={downloadUrl}
-              alt={attachment.fileName}
-              width={300}
-              height={200}
-              className="object-cover w-full h-auto"
-              style={{ maxHeight: '300px' }}
-            />
-            {/* Overlay ao hover */}
-            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-all flex items-center justify-center">
-              <ZoomIn className="h-8 w-8 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
-            </div>
-          </div>
-          <p className={cn(
-            "text-xs mt-1",
-            isOwnMessage ? "text-blue-100" : "text-muted-foreground"
-          )}>
-            {attachment.fileName} • {formatFileSize(attachment.fileSize)}
-          </p>
-        </div>
-
-        {/* Modal de visualização da imagem */}
-        <Dialog open={showImageModal} onOpenChange={setShowImageModal}>
-          <DialogContent className="max-w-4xl w-full">
-            <div className="relative w-full">
-              <Image
-                src={downloadUrl}
-                alt={attachment.fileName}
-                width={1200}
-                height={800}
-                className="object-contain w-full h-auto max-h-[80vh]"
-              />
-              <div className="mt-4 flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium">{attachment.fileName}</p>
-                  <p className="text-xs text-muted-foreground">{formatFileSize(attachment.fileSize)}</p>
-                </div>
-                <Button onClick={handleDownload} variant="outline" size="sm">
-                  <Download className="h-4 w-4 mr-2" />
-                  Download
-                </Button>
-              </div>
-            </div>
-          </DialogContent>
-        </Dialog>
-      </>
-    );
-  }
-
-  // Para outros ficheiros, mostrar botão de download
-  return (
-    <button
-      onClick={handleDownload}
-      disabled={loading}
-      className={cn(
-        "flex items-center gap-2 p-2 rounded",
-        "border transition-colors",
-        isOwnMessage 
-          ? "bg-blue-700 border-blue-400 hover:bg-blue-800 text-white"
-          : "bg-background border-border hover:bg-muted"
-      )}
-    >
-      <FileText className="h-4 w-4 flex-shrink-0" />
-      <div className="flex-1 min-w-0 text-left">
-        <p className="text-xs font-medium truncate">{attachment.fileName}</p>
-        <p className={cn(
-          "text-xs",
-          isOwnMessage ? "text-blue-100" : "text-muted-foreground"
-        )}>
-          {formatFileSize(attachment.fileSize)}
-        </p>
-      </div>
-      {loading ? (
-        <div className="animate-spin h-4 w-4 border-2 border-current border-t-transparent rounded-full" />
-      ) : (
-        <Download className="h-4 w-4 flex-shrink-0" />
-      )}
-    </button>
-  );
-}
-
 export function ChatContent({ users, currentUserId, currentUserName, openUserId }: ChatContentProps) {
   const { data: session } = useSession();
   const [language, setLanguage] = useState<Language>('pt');
@@ -214,10 +61,9 @@ export function ChatContent({ users, currentUserId, currentUserName, openUserId 
   const [searchTerm, setSearchTerm] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const [isSending, setIsSending] = useState(false);
-  const [pendingAttachments, setPendingAttachments] = useState<Attachment[]>([]); // NOVO
-  const [showScrollButton, setShowScrollButton] = useState(false); // Mostrar botão de scroll
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
+  const [showScrollButton, setShowScrollButton] = useState(false);
   const typingTimeoutRef = useRef<NodeJS.Timeout>();
   const pollingRef = useRef<NodeJS.Timeout>();
   const { toast } = useToast();
@@ -295,32 +141,29 @@ export function ChatContent({ users, currentUserId, currentUserName, openUserId 
     };
   }, [selectedUser]);
 
+  // Scroll to bottom when messages change
   // Detectar posição do scroll para mostrar/esconder botão
   useEffect(() => {
     const container = messagesContainerRef.current;
     if (!container) return;
 
     const handleScroll = () => {
-      const scrollThreshold = 200; // Mostrar botão se estiver mais de 200px do fim
+      const scrollThreshold = 200;
       const distanceFromBottom = container.scrollHeight - container.scrollTop - container.clientHeight;
       setShowScrollButton(distanceFromBottom > scrollThreshold);
     };
 
-    // Adicionar listener de scroll no container
     container.addEventListener('scroll', handleScroll);
-    
-    // Verificar posição inicial
     handleScroll();
 
     return () => {
       container.removeEventListener('scroll', handleScroll);
     };
-  }, [messages]); // Recalcular quando mensagens mudarem
+  }, [messages]);
 
-  // Função manual para ir para o fim (apenas quando o usuário clicar explicitamente)
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-    setShowScrollButton(false); // Esconder botão após scroll
+    setShowScrollButton(false);
   };
 
   const fetchConversations = async () => {
@@ -348,20 +191,16 @@ export function ChatContent({ users, currentUserId, currentUserName, openUserId 
   };
 
   const sendMessage = async () => {
-    // Permitir enviar se houver mensagem OU anexos
-    if ((!newMessage.trim() && pendingAttachments.length === 0) || !selectedUser || isSending) return;
+    if (!newMessage.trim() || !selectedUser || isSending) return;
 
     setIsSending(true);
     try {
-      const attachmentIds = pendingAttachments.map(a => a.id);
-      
       const response = await fetch('/api/chat/messages', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           receiverId: selectedUser.id,
-          content: newMessage.trim() || '', // Pode estar vazio se só houver anexos
-          attachmentIds: attachmentIds.length > 0 ? attachmentIds : undefined
+          content: newMessage.trim()
         })
       });
 
@@ -369,7 +208,6 @@ export function ChatContent({ users, currentUserId, currentUserName, openUserId 
         const message = await response.json();
         setMessages([...messages, message]);
         setNewMessage('');
-        setPendingAttachments([]); // Limpar anexos após envio
         
         // Update typing status
         await updateTypingStatus(false);
@@ -472,10 +310,7 @@ export function ChatContent({ users, currentUserId, currentUserName, openUserId 
   return (
     <div className="h-[calc(100vh-8rem)]">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
-        <div className="w-full">
-          <div className="flex items-center gap-3 mb-2">
-            <BackButton fallbackRoute="/dashboard" variant="ghost" />
-          </div>
+        <div>
           <h1 className="text-3xl font-bold text-foreground flex items-center gap-3">
             <MessageCircle className="h-8 w-8 text-primary" />
             {getTranslation('chat', language)}
@@ -695,16 +530,16 @@ export function ChatContent({ users, currentUserId, currentUserName, openUserId 
                   className="absolute inset-0 overflow-y-auto p-4 scroll-smooth"
                 >
                   <div className="space-y-4">
-                    {messages.length === 0 ? (
-                      <div className="text-center py-12">
-                        <MessageCircle className="h-12 w-12 text-gray-300 mx-auto mb-4" />
-                        <p className="text-muted-foreground text-sm">
-                          {getTranslation('noMessages', language)}
-                        </p>
-                      </div>
-                    ) : (
-                      <AnimatePresence>
-                        {messages.map((message, index) => {
+                  {messages.length === 0 ? (
+                    <div className="text-center py-12">
+                      <MessageCircle className="h-12 w-12 text-gray-300 mx-auto mb-4" />
+                      <p className="text-muted-foreground text-sm">
+                        {getTranslation('noMessages', language)}
+                      </p>
+                    </div>
+                  ) : (
+                    <AnimatePresence>
+                      {messages.map((message, index) => {
                         const isOwnMessage = message.senderId === currentUserId;
                         const showDate = index === 0 || 
                           new Date(messages[index - 1].createdAt).toDateString() !== new Date(message.createdAt).toDateString();
@@ -736,24 +571,7 @@ export function ChatContent({ users, currentUserId, currentUserName, openUserId 
                                     : 'bg-muted text-foreground'
                                 )}
                               >
-                                {/* Texto da mensagem */}
-                                {message.content && (
-                                  <p className="text-sm break-words">{message.content}</p>
-                                )}
-                                
-                                {/* Anexos */}
-                                {message.attachments && message.attachments.length > 0 && (
-                                  <div className={cn("space-y-2", message.content && "mt-2")}>
-                                    {message.attachments.map((attachment) => (
-                                      <AttachmentPreview
-                                        key={attachment.id}
-                                        attachment={attachment}
-                                        isOwnMessage={isOwnMessage}
-                                      />
-                                    ))}
-                                  </div>
-                                )}
-                                
+                                <p className="text-sm break-words">{message.content}</p>
                                 <span 
                                   className={cn(
                                     'text-xs mt-1 block',
@@ -770,9 +588,10 @@ export function ChatContent({ users, currentUserId, currentUserName, openUserId 
                     </AnimatePresence>
                   )}
                   <div ref={messagesEndRef} />
+                  </div>
                 </div>
               
-                {/* Botão flutuante para scroll ao fim (tipo WhatsApp) */}
+                {/* Botão flutuante para scroll ao fim (estilo WhatsApp) */}
                 <AnimatePresence>
                   {showScrollButton && (
                     <motion.button
@@ -790,16 +609,7 @@ export function ChatContent({ users, currentUserId, currentUserName, openUserId 
               </div>
 
               {/* Message Input */}
-              <div className="p-4 border-t space-y-3">
-                {/* Uploader de anexos */}
-                <ChatAttachmentUploader
-                  attachments={pendingAttachments}
-                  onAttachmentsChange={setPendingAttachments}
-                  maxFiles={5}
-                  maxFileSize={5 * 1024 * 1024}
-                />
-                
-                {/* Input de mensagem */}
+              <div className="p-4 border-t">
                 <div className="flex gap-2">
                   <Input
                     value={newMessage}
@@ -811,7 +621,7 @@ export function ChatContent({ users, currentUserId, currentUserName, openUserId 
                   />
                   <Button 
                     onClick={sendMessage}
-                    disabled={(!newMessage.trim() && pendingAttachments.length === 0) || isSending}
+                    disabled={!newMessage.trim() || isSending}
                     className="gap-2"
                   >
                     <Send className="h-4 w-4" />
