@@ -1,0 +1,1276 @@
+generator client {
+    provider = "prisma-client-js"
+    binaryTargets = ["native", "linux-musl-arm64-openssl-3.0.x"]
+    output = "/home/ubuntu/organizen/nextjs_space/node_modules/.prisma/client"
+}
+
+datasource db {
+    provider = "postgresql"
+    url      = env("DATABASE_URL")
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+model Company {
+  id               String            @id @default(cuid())
+  name             String
+  email            String            @unique
+  
+  // Informações de Contato (Fase 1)
+  phone            String?
+  website          String?
+  
+  // Endereço (Fase 1)
+  address          String?
+  city             String?
+  state            String?
+  country          String?
+  postalCode       String?
+  
+  // Informações Legais (Fase 1)
+  taxId            String?           // CNPJ/NIF
+  
+  // Configurações Regionais (Fase 1)
+  defaultLanguage  String            @default("pt") // pt, en, es, fr
+  
+  // Configurações Regionais Avançadas (Fase 5)
+  timezone         String            @default("Europe/Lisbon") // Fuso horário da empresa
+  dateFormat       String            @default("DD/MM/YYYY") // Formato de data
+  timeFormat       String            @default("24h") // 12h ou 24h
+  firstDayOfWeek   Int               @default(1) // 0=Domingo, 1=Segunda
+  currency         String            @default("EUR") // Código ISO 4217
+  
+  // Assets (Fase 1)
+  favicon          String?           // URL do favicon
+  pwaIcon          String?           // URL do ícone PWA
+  
+  // Horário de Funcionamento (Fase 1)
+  businessHours    Json?             // { "monday": {"start": "09:00", "end": "18:00"}, ... }
+  
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+  departments      Department[]
+  departmentTemplates DepartmentTemplate[]
+  departmentCustomFields DepartmentCustomField[]
+  messages         Message[]
+  messageTemplates MessageTemplate[]
+  shifts           Shift[]
+  tasks            Task[]
+  users            User[]
+  branding          CompanyBranding?
+  securitySettings  SecuritySettings?
+  customTaskStatuses CustomTaskStatus[]
+  customTaskTags     CustomTaskTag[]
+  customTaskPriorities CustomTaskPriority[]
+  shiftTemplates     ShiftTemplate[]
+  companyHolidays    CompanyHoliday[]
+  shiftReminders     ShiftReminder[]
+  attendanceSettings AttendanceSettings?
+
+  @@map("companies")
+}
+
+model CompanyBranding {
+  id                    String   @id @default(cuid())
+  companyId             String   @unique
+  
+  // Logotipo
+  logoUrl               String?  // URL do logo armazenado
+  logoSize              Int?     @default(150) // Tamanho em pixels
+  
+  // Cores Corporativas
+  primaryColor          String   @default("#3B82F6") // Cor principal
+  secondaryColor        String?  // Cor secundária
+  accentColor           String?  // Cor de destaque
+  
+  // Tela de Login/Signup (Fase 3)
+  loginBackgroundType   String   @default("gradient") // "solid", "gradient", "image"
+  loginBackgroundImage  String?  // URL da imagem de fundo (se type = image)
+  loginBackgroundColor  String?  // Cor de fundo (se type = solid)
+  welcomeMessage        String?  // Mensagem de boas-vindas
+  tagline               String?  // Slogan/tagline da empresa
+  
+  // Links Personalizados (Fase 3)
+  supportLink           String?  // Link de suporte
+  termsLink             String?  // Link de termos de uso
+  privacyLink           String?  // Link de política de privacidade
+  
+  // Tema
+  theme                 String   @default("light") // "light" ou "dark"
+  
+  // Subdomínio (Fase 5 - futuro)
+  customSubdomain       String?  @unique
+  customDomain          String?  @unique
+  
+  // Configurações de Email (Fase 4 - futuro)
+  emailHeaderColor      String?
+  emailSignature        String?
+  
+  // Templates de Email Personalizados (Fase 3B)
+  emailSenderName       String?  // Nome do remetente nos emails
+  emailFooter           String?  @db.Text // Rodapé padrão para todos os emails
+  
+  // Template: Email de Boas-vindas
+  emailWelcomeSubject   String?  @default("Bem-vindo(a) ao {{companyName}}!")
+  emailWelcomeBody      String?  @db.Text
+  emailWelcomeEnabled   Boolean  @default(true)
+  
+  // Template: Redefinição de Senha
+  emailResetSubject     String?  @default("Redefinir sua senha")
+  emailResetBody        String?  @db.Text
+  emailResetEnabled     Boolean  @default(true)
+  
+  // Template: Convite para Equipe
+  emailInviteSubject    String?  @default("Você foi convidado(a) para {{companyName}}")
+  emailInviteBody       String?  @db.Text
+  emailInviteEnabled    Boolean  @default(true)
+  
+  // Template: Notificação Geral
+  emailNotifySubject    String?  @default("Notificação de {{companyName}}")
+  emailNotifyBody       String?  @db.Text
+  emailNotifyEnabled    Boolean  @default(true)
+  
+  // Metadados
+  isActive              Boolean  @default(true)
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+  
+  // Relação
+  company               Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@map("company_branding")
+}
+
+model Department {
+  id        String   @id @default(cuid())
+  name      String
+  companyId String
+  templateId String? // Referência ao template usado (se aplicável)
+  customFieldsData Json? // Dados dos campos customizados
+  displayOrder Int   @default(0) // Ordem de exibição customizada
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  company   Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  template  DepartmentTemplate? @relation(fields: [templateId], references: [id], onDelete: SetNull)
+  teams     Team[]
+  users     User[]
+  userDepartments UserDepartment[] @relation("UserDepartments") // Múltiplos utilizadores
+
+  @@map("departments")
+}
+
+model DepartmentTemplate {
+  id                    String       @id @default(cuid())
+  companyId             String
+  name                  String
+  description           String?
+  defaultManagerRole    String?      // MANAGER, SUPERVISOR, etc.
+  createdAt             DateTime     @default(now())
+  updatedAt             DateTime     @updatedAt
+  company               Company      @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  departments           Department[] // Departamentos criados com este template
+  customFields          TemplateCustomField[] // Campos customizados do template
+  
+  @@unique([companyId, name])
+  @@map("department_templates")
+}
+
+model TemplateCustomField {
+  id            String    @id @default(cuid())
+  templateId    String
+  name          String
+  fieldType     String    // TEXT, NUMBER, DATE, TEXTAREA, CHECKBOX, SELECT
+  options       String?   // Para tipo SELECT (separados por vírgula)
+  isRequired    Boolean   @default(false)
+  displayOrder  Int       @default(0)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  template      DepartmentTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  
+  @@map("template_custom_fields")
+}
+
+model DepartmentCustomField {
+  id            String    @id @default(cuid())
+  companyId     String
+  fieldName     String
+  fieldType     String    // text, number, date, select, checkbox, etc.
+  fieldOptions  Json?     // Para tipo select (array de opções)
+  isRequired    Boolean   @default(false)
+  order         Int       @default(0)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  company       Company   @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  
+  @@unique([companyId, fieldName])
+  @@map("department_custom_fields")
+}
+
+model Team {
+  id           String     @id @default(cuid())
+  name         String
+  description  String?
+  departmentId String
+  leaderId     String?    // Líder da equipa (pode ser ADMIN, MANAGER ou SUPERVISOR)
+  parentTeamId String?    // Equipa pai (para hierarquia)
+  level        TeamLevel  @default(OPERATIONS) // Nível hierárquico da equipa
+  displayOrder Int        @default(0) // Ordem de exibição customizada
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+  
+  // Relações
+  department   Department @relation(fields: [departmentId], references: [id], onDelete: Cascade)
+  leader       User?      @relation("TeamLeader", fields: [leaderId], references: [id], onDelete: SetNull)
+  parentTeam   Team?      @relation("TeamHierarchy", fields: [parentTeamId], references: [id], onDelete: SetNull)
+  childTeams   Team[]     @relation("TeamHierarchy")
+  members      User[]     @relation("TeamMembers")
+
+  @@map("teams")
+  @@index([leaderId])
+  @@index([parentTeamId])
+  @@index([departmentId])
+}
+
+model User {
+  id                      String              @id @default(cuid())
+  name                    String?
+  email                   String              @unique
+  emailVerified           DateTime?
+  image                   String?
+  password                String?
+  role                    UserRole            @default(STAFF)
+  companyId               String
+  departmentId            String?             // Opcional - null indica lista de espera
+  teamId                  String?             // Opcional - null indica lista de espera
+  language                String              @default("pt")
+  waitingListOrder        Int                 @default(0) // Ordem na lista de espera
+  teamMemberOrder         Int                 @default(0) // Ordem dentro da equipa
+  
+  // Sistema de Aprovação de Usuários (Fase 2)
+  approved                Boolean             @default(false) // Se o usuário foi aprovado
+  approvedAt              DateTime?           // Data/hora da aprovação
+  approvedBy              String?             // ID do usuário que aprovou
+  
+  // Dados Pessoais
+  phone                   String?
+  address                 String?
+  city                    String?
+  state                   String?
+  country                 String?
+  postalCode              String?
+  birthDate               DateTime?
+  taxId                   String?             // NIF / CPF
+  
+  // Dados Profissionais
+  employeeNumber          String?
+  hireDate                DateTime?
+  jobTitle                String?
+  
+  // Contacto de Emergência
+  emergencyContactName     String?
+  emergencyContactPhone    String?
+  emergencyContactRelation String?
+  
+  emailSignature          String?             // Assinatura HTML para emails internos
+  createdAt               DateTime            @default(now())
+  updatedAt               DateTime            @updatedAt
+  accounts                Account[]
+  sessions                Session[]
+  receivedMessages        Message[]           @relation("ReceivedMessages")
+  sentMessages            Message[]           @relation("SentMessages")
+  messageRecipients       MessageRecipient[]  // Mensagens recebidas como destinatário
+  messageTemplates        MessageTemplate[]   // Templates criados pelo usuário
+  assignedShifts          Shift[]
+  assignedTasks           Task[]
+  testimonials            Testimonial[]
+  company                 Company             @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  department              Department?         @relation(fields: [departmentId], references: [id])
+  team                    Team?               @relation("TeamMembers", fields: [teamId], references: [id])
+  ledTeams                Team[]              @relation("TeamLeader")  // Equipas que lidera
+  shiftSwapRequests       ShiftSwapRequest[]  @relation("ShiftSwapRequester")
+  shiftSwapRequestsTarget ShiftSwapRequest[]  @relation("ShiftSwapTarget")
+  shiftAssignments        ShiftAssignment[]   // Turnos atribuídos ao colaborador
+  timeOffRequests         TimeOffRequest[]
+  userDepartments         UserDepartment[]    // Múltiplos departamentos
+  taskMembers             TaskMember[]        // Tarefas onde é membro
+  taskComments            TaskComment[]       // Comentários em tarefas
+  eventCollaborators      EventCollaborator[] // Eventos onde é colaborador
+
+  @@map("users")
+}
+
+model Shift {
+  id          String   @id @default(cuid())
+  title       String
+  description String?
+  startTime   DateTime
+  endTime     DateTime
+  userId      String   @map("user_id") // Mantido para compatibilidade (criador do turno)
+  companyId   String   @map("company_id")
+  capacity    Int      @default(1) // Capacidade máxima de pessoas no turno
+  displayOrder Int     @default(0) // Ordem de exibição customizada
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+  company     Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  assignments ShiftAssignment[] // Múltiplas atribuições de colaboradores
+
+  @@map("shifts")
+}
+
+// Atribuições de colaboradores a turnos (N pessoas por turno)
+model ShiftAssignment {
+  id          String       @id @default(cuid())
+  shiftId     String       @map("shift_id")
+  userId      String       @map("user_id")
+  status      ShiftAssignmentStatus @default(CONFIRMED)
+  notes       String?      // Notas específicas para esta atribuição
+  createdAt   DateTime     @default(now()) @map("created_at")
+  updatedAt   DateTime     @updatedAt @map("updated_at")
+  
+  shift       Shift        @relation(fields: [shiftId], references: [id], onDelete: Cascade)
+  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  attendance  Attendance?  // Registo de ponto para esta atribuição
+  
+  @@unique([shiftId, userId]) // Um usuário não pode estar duas vezes no mesmo turno
+  @@map("shift_assignments")
+}
+
+enum ShiftAssignmentStatus {
+  CONFIRMED   // Confirmado
+  PENDING     // Pendente de confirmação
+  CANCELLED   // Cancelado
+}
+
+// Lembretes de Turnos
+model ShiftReminder {
+  id             String   @id @default(cuid())
+  shiftId        String
+  reminderHours  Int      // Horas antes do turno (ex: 1, 2, 24)
+  sentAt         DateTime @default(now())
+  companyId      String
+  
+  company        Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  
+  @@unique([shiftId, reminderHours])
+  @@map("shift_reminders")
+}
+
+model Task {
+  id                    String              @id @default(cuid())
+  title                 String
+  description           String?
+  dueDate               DateTime?
+  status                TaskStatus          @default(PENDING)
+  priority              TaskPriority?       @default(MEDIUM)
+  // Novos campos para customização (Fase 3)
+  customStatusId        String?
+  customPriorityId      String?
+  userId                String              // Responsável principal (mantém compatibilidade)
+  companyId             String
+  eventId               String?             // Vincula tarefa a um evento (opcional)
+  parentId              String?             // Para subtarefas
+  displayOrder          Int                 @default(0) // Ordem de exibição customizada
+  startedAt             DateTime?           // Data/hora que foi iniciada
+  completedAt           DateTime?           // Data/hora que foi concluída
+  createdAt             DateTime            @default(now())
+  updatedAt             DateTime            @updatedAt
+  company               Company             @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  user                  User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  event                 Event?              @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  parent                Task?               @relation("TaskSubtasks", fields: [parentId], references: [id], onDelete: Cascade)
+  customStatus          CustomTaskStatus?   @relation(fields: [customStatusId], references: [id], onDelete: SetNull)
+  customPriority        CustomTaskPriority? @relation(fields: [customPriorityId], references: [id], onDelete: SetNull)
+  subtasks              Task[]              @relation("TaskSubtasks")
+  comments              TaskComment[]
+  checkItems            CheckItem[]
+  tags                  TaskTag[]
+  customTags            TaskCustomTag[]     // Relação many-to-many com CustomTaskTag
+  attachments           TaskAttachment[]
+  members               TaskMember[]        // Múltiplos membros atribuídos à tarefa
+
+  @@map("tasks")
+}
+
+model TaskMember {
+  id        String   @id @default(cuid())
+  taskId    String
+  userId    String
+  role      String   @default("MEMBER") // OWNER, MEMBER, VIEWER
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  task      Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([taskId, userId])
+  @@map("task_members")
+}
+
+model TaskComment {
+  id        String   @id @default(cuid())
+  content   String
+  taskId    String
+  userId    String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  task      Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("task_comments")
+}
+
+model CheckItem {
+  id        String   @id @default(cuid())
+  title     String
+  completed Boolean  @default(false)
+  order     Int      @default(0)
+  taskId    String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  task      Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+
+  @@map("check_items")
+}
+
+model TaskTag {
+  id        String   @id @default(cuid())
+  name      String
+  color     String   @default("#3B82F6")
+  taskId    String
+  createdAt DateTime @default(now())
+  task      Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+
+  @@map("task_tags")
+}
+
+model TaskAttachment {
+  id                 String   @id @default(cuid())
+  fileName           String
+  fileSize           Int
+  mimeType           String
+  cloud_storage_path String
+  taskId             String
+  createdAt          DateTime @default(now())
+  task               Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+
+  @@map("task_attachments")
+}
+
+enum MessagePriority {
+  LOW
+  NORMAL
+  HIGH
+  URGENT
+}
+
+enum RecipientType {
+  TO
+  CC
+  BCC
+}
+
+model Message {
+  id            String              @id @default(cuid())
+  subject       String
+  content       String              // Agora suporta HTML do editor rico
+  read          Boolean             @default(false)
+  archived      Boolean             @default(false)
+  deleted       Boolean             @default(false)
+  isDraft       Boolean             @default(false)
+  priority      MessagePriority     @default(NORMAL)
+  scheduledFor  DateTime?           // Para agendar envio
+  folderId      String?
+  senderId      String
+  receiverId    String              // Mantido para compatibilidade
+  companyId     String
+  replyToId     String?             // Thread de conversação
+  createdAt     DateTime            @default(now())
+  updatedAt     DateTime            @updatedAt
+  company       Company             @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  receiver      User                @relation("ReceivedMessages", fields: [receiverId], references: [id], onDelete: Cascade)
+  sender        User                @relation("SentMessages", fields: [senderId], references: [id], onDelete: Cascade)
+  folder        MessageFolder?      @relation(fields: [folderId], references: [id], onDelete: SetNull)
+  replyTo       Message?            @relation("MessageReplies", fields: [replyToId], references: [id], onDelete: SetNull)
+  replies       Message[]           @relation("MessageReplies")
+  attachments   Attachment[]
+  recipients    MessageRecipient[]  // Múltiplos destinatários
+
+  @@map("messages")
+}
+
+model MessageRecipient {
+  id        String        @id @default(cuid())
+  messageId String
+  userId    String
+  type      RecipientType @default(TO)
+  read      Boolean       @default(false)
+  readAt    DateTime?
+  createdAt DateTime      @default(now())
+  message   Message       @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  user      User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([messageId, userId, type])
+  @@map("message_recipients")
+}
+
+model MessageTemplate {
+  id          String   @id @default(cuid())
+  name        String
+  subject     String
+  content     String   // HTML do editor rico
+  isPublic    Boolean  @default(false)
+  category    String?  // "RH", "Financeiro", "Geral", etc.
+  userId      String?  // null = disponível para toda empresa
+  companyId   String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  user        User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  company     Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@map("message_templates")
+}
+
+model Attachment {
+  id                 String   @id @default(cuid())
+  fileName           String
+  fileSize           Int
+  mimeType           String
+  cloud_storage_path String
+  messageId          String?
+  chatMessageId      String?
+  createdAt          DateTime @default(now())
+  message            Message? @relation(fields: [messageId], references: [id], onDelete: Cascade)
+
+  @@map("attachments")
+  @@index([chatMessageId])
+}
+
+model MessageFolder {
+  id           String    @id @default(cuid())
+  name         String
+  color        String?
+  userId       String
+  displayOrder Int       @default(0) // Ordem de exibição customizada
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  messages     Message[]
+
+  @@map("message_folders")
+}
+
+model Notification {
+  id        String           @id @default(cuid())
+  title     String
+  message   String
+  type      NotificationType
+  read      Boolean          @default(false)
+  userId    String
+  relatedId String?          // ID da mensagem, tarefa ou turno relacionado
+  createdAt DateTime         @default(now())
+  updatedAt DateTime         @updatedAt
+
+  @@map("notifications")
+}
+
+model PushSubscription {
+  id         String   @id @default(cuid())
+  userId     String
+  endpoint   String   @unique
+  p256dh     String
+  auth       String
+  userAgent  String?  // Informação sobre o dispositivo/navegador
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  
+  @@index([userId])
+  @@map("push_subscriptions")
+}
+
+enum UserRole {
+  ADMIN
+  MANAGER
+  SUPERVISOR
+  STAFF
+}
+
+enum TeamLevel {
+  COMPANY      // Equipa da empresa (Admin)
+  MANAGEMENT   // Equipa de gerência (Manager)
+  SUPERVISION  // Equipa de supervisão (Supervisor)
+  OPERATIONS   // Equipa operacional (Staff)
+}
+
+enum TaskStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+}
+
+enum TaskPriority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+
+
+enum NotificationType {
+  MESSAGE
+  TASK
+  TASK_ASSIGNED
+  TASK_COMMENT
+  SHIFT
+  SHIFT_REMINDER
+  SYSTEM
+  CHAT
+  SHIFT_SWAP
+  TIME_OFF
+  MENTION
+  REPORT
+  BIRTHDAY
+}
+
+// Chat em Tempo Real
+model ChatMessage {
+  id              String   @id @default(cuid())
+  content         String
+  read            Boolean  @default(false)
+  senderId        String
+  receiverId      String?
+  groupId         String?
+  companyId       String
+  // Campos de mídia
+  attachmentUrl   String?  // cloud_storage_path (chave S3)
+  attachmentType  String?  // image, video, audio, document
+  attachmentName  String?  // nome original do arquivo
+  attachmentSize  Int?     // tamanho em bytes
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@map("chat_messages")
+  @@index([senderId, receiverId])
+  @@index([companyId])
+  @@index([groupId])
+}
+
+model ChatGroup {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  type        String?
+  companyId   String
+  createdBy   String?
+  createdById String?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("chat_groups")
+  @@index([companyId])
+}
+
+model ChatGroupMember {
+  id        String   @id @default(cuid())
+  groupId   String
+  userId    String
+  role      String?
+  joinedAt  DateTime @default(now())
+  isMuted   Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("chat_group_members")
+  @@unique([groupId, userId])
+  @@index([groupId])
+  @@index([userId])
+}
+
+model BirthdaySettings {
+  id                    String   @id @default(cuid())
+  companyId             String   @unique
+  enabled               Boolean  @default(true)
+  messageTemplate       String?
+  sendTime              String   @default("09:00")
+  notifyBirthdayPerson  Boolean  @default(true)
+  notifyManagers        Boolean  @default(true)
+  notifyTeamMembers     Boolean  @default(true)
+  visibility            String   @default("PUBLIC")
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  @@map("birthday_settings")
+}
+
+model UserDepartment {
+  id           String     @id @default(cuid())
+  userId       String
+  departmentId String
+  isPrimary    Boolean    @default(false)
+  isActive     Boolean    @default(true)
+  priority     Int        @default(0)
+  role         String?    // Papel específico neste departamento
+  availability String?    // Percentual ou horário de disponibilidade
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  user         User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  department   Department @relation("UserDepartments", fields: [departmentId], references: [id], onDelete: Cascade)
+
+  @@map("user_departments")
+  @@unique([userId, departmentId])
+  @@index([userId])
+  @@index([departmentId])
+}
+
+model UserStatus {
+  id           String   @id @default(cuid())
+  userId       String   @unique
+  isOnline     Boolean  @default(false)
+  lastSeen     DateTime @default(now())
+  isTyping     Boolean  @default(false)
+  typingTo     String?
+  lastActivity DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@map("user_status")
+  @@index([userId])
+}
+
+// Sistema de Troca de Turnos
+model ShiftSwapRequest {
+  id                String            @id @default(cuid())
+  requesterId       String
+  targetUserId      String?           // Usuário específico para troca (opcional)
+  originalShiftId   String
+  offeredShiftId    String?           // Turno oferecido em troca (opcional)
+  reason            String?
+  status            RequestStatus     @default(PENDING)
+  responseMessage   String?
+  reviewedBy        String?           // ID do supervisor/manager que aprovou/rejeitou
+  reviewedAt        DateTime?
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+  requester         User              @relation("ShiftSwapRequester", fields: [requesterId], references: [id], onDelete: Cascade)
+  targetUser        User?             @relation("ShiftSwapTarget", fields: [targetUserId], references: [id], onDelete: Cascade)
+
+  @@map("shift_swap_requests")
+  @@index([requesterId])
+  @@index([targetUserId])
+  @@index([status])
+}
+
+// Sistema de Pedido de Folga
+model TimeOffRequest {
+  id              String        @id @default(cuid())
+  userId          String
+  type            TimeOffType   @default(VACATION)
+  startDate       DateTime
+  endDate         DateTime
+  reason          String?
+  status          RequestStatus @default(PENDING)
+  responseMessage String?
+  reviewedBy      String?       // ID do supervisor/manager que aprovou/rejeitou
+  reviewedAt      DateTime?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  user            User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("time_off_requests")
+  @@index([userId])
+  @@index([status])
+}
+
+enum RequestStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  CANCELLED
+}
+
+enum TimeOffType {
+  VACATION      // Férias
+  SICK_LEAVE    // Licença médica
+  PERSONAL      // Motivo pessoal
+  OTHER         // Outro
+}
+
+model PasswordResetToken {
+  id        String   @id @default(cuid())
+  email     String
+  token     String   @unique
+  expires   DateTime
+  used      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([email])
+  @@index([token])
+}
+
+// Sessões Ativas para controle de sessões concorrentes
+model ActiveSession {
+  id             String   @id @default(cuid())
+  userId         String
+  sessionToken   String   @unique  // Token JWT ou session token
+  ipAddress      String?
+  userAgent      String?
+  device         String?  // Ex: "Chrome/Windows", "Safari/iPhone"
+  location       String?  // Ex: "Lisboa, Portugal"
+  lastActivity   DateTime @default(now())
+  expiresAt      DateTime
+  createdAt      DateTime @default(now())
+  
+  @@index([userId])
+  @@index([sessionToken])
+  @@index([expiresAt])
+  @@map("active_sessions")
+}
+
+// Configurações de Segurança (Fase 2)
+model SecuritySettings {
+  id                      String   @id @default(cuid())
+  companyId               String   @unique
+  company                 Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  
+  // Políticas de senha
+  minPasswordLength       Int      @default(8)
+  requireUppercase        Boolean  @default(true)
+  requireLowercase        Boolean  @default(true)
+  requireNumbers          Boolean  @default(true)
+  requireSpecialChars     Boolean  @default(false)
+  passwordExpirationDays  Int?     // null = nunca expira
+  
+  // Sessões
+  sessionTimeoutMinutes   Int      @default(480) // 8 horas
+  maxConcurrentSessions   Int      @default(3)
+  
+  // Aprovação de usuários
+  requireApproval         Boolean  @default(false)
+  autoApproveEmails       String[] // Domínios ou emails auto-aprovados
+  
+  // Níveis de acesso padrão
+  defaultRole             String   @default("STAFF") // ADMIN, MANAGER, SUPERVISOR, STAFF
+  defaultPermissions      Json?    // Permissões default para novos usuários
+  
+  createdAt               DateTime @default(now())
+  updatedAt               DateTime @updatedAt
+
+  @@map("security_settings")
+}
+
+// ========================================
+// FASE 3: Customização de Tarefas
+// ========================================
+
+model CustomTaskStatus {
+  id          String   @id @default(cuid())
+  companyId   String
+  company     Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  name        String
+  color       String   @default("#3B82F6")
+  icon        String?  // Nome do ícone Lucide (ex: "Clock", "CheckCircle", "AlertCircle")
+  order       Int      @default(0)
+  isDefault   Boolean  @default(false)
+  isArchived  Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  tasks       Task[]
+
+  @@unique([companyId, name])
+  @@map("custom_task_statuses")
+}
+
+model CustomTaskTag {
+  id          String          @id @default(cuid())
+  companyId   String
+  company     Company         @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  name        String
+  color       String          @default("#3B82F6")
+  description String?
+  order       Int             @default(0)
+  createdAt   DateTime        @default(now())
+  tasks       TaskCustomTag[] // Relação many-to-many com Task
+
+  @@unique([companyId, name])
+  @@map("custom_task_tags")
+}
+
+// Tabela intermediária para a relação many-to-many entre Task e CustomTaskTag
+model TaskCustomTag {
+  id        String        @id @default(cuid())
+  taskId    String
+  tagId     String
+  createdAt DateTime      @default(now())
+  task      Task          @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  tag       CustomTaskTag @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@unique([taskId, tagId])
+  @@map("task_custom_tags")
+}
+
+model CustomTaskPriority {
+  id          String   @id @default(cuid())
+  companyId   String
+  company     Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  name        String
+  level       Int      // 1 = baixa, 2 = média, 3 = alta, 4 = urgente, 5 = crítica
+  color       String   @default("#3B82F6")
+  icon        String?  // Nome do ícone Lucide (ex: "ArrowDown", "Minus", "ArrowUp", "AlertTriangle", "Flame")
+  isDefault   Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  tasks       Task[]
+
+  @@unique([companyId, name])
+  @@unique([companyId, level])
+  @@map("custom_task_priorities")
+}
+
+// ========================================
+// FASE 4: Notificações e Comunicação
+// ========================================
+
+model NotificationSettings {
+  id                    String   @id @default(cuid())
+  userId                String   @unique
+  
+  // Preferências de Email (por tipo de evento)
+  emailOnTaskAssigned   Boolean  @default(true)
+  emailOnTaskCompleted  Boolean  @default(true)
+  emailOnTaskComment    Boolean  @default(true)
+  emailOnMention        Boolean  @default(true)
+  emailOnDeadline       Boolean  @default(true)
+  emailOnShiftAssigned  Boolean  @default(true)
+  emailOnShiftSwap      Boolean  @default(true)
+  emailOnTimeOff        Boolean  @default(true)
+  emailOnMessage        Boolean  @default(true)
+  
+  // Notificações Push
+  pushEnabled           Boolean  @default(true)
+  pushOnTaskAssigned    Boolean  @default(true)
+  pushOnTaskComment     Boolean  @default(true)
+  pushOnMention         Boolean  @default(true)
+  pushOnMessage         Boolean  @default(true)
+  pushOnShiftSwap       Boolean  @default(true)
+  pushOnTimeOff         Boolean  @default(true)
+  
+  // Resumos Periódicos (Digests)
+  dailyDigest           Boolean  @default(false)
+  weeklyDigest          Boolean  @default(true)
+  monthlyDigest         Boolean  @default(false)
+  digestTime            String   @default("09:00") // HH:mm formato 24h
+  digestDayOfWeek       Int?     @default(1) // 0=Domingo, 1=Segunda, ..., 6=Sábado (para resumo semanal)
+  digestDayOfMonth      Int?     @default(1) // 1-28 (para resumo mensal)
+  
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  @@map("notification_settings")
+}
+
+// ========================================
+// Sistema de Testemunhos (Testimonials)
+// ========================================
+
+model Testimonial {
+  id          String   @id @default(cuid())
+  companyId   String
+  userId      String?  // ID do utilizador (usa foto de perfil automaticamente)
+  
+  // Informações do testemunho
+  name        String   // Nome da pessoa que deu o testemunho
+  jobTitle    String   // Cargo
+  company     String   // Nome da empresa
+  comment     String   @db.Text // Comentário/testemunho
+  rating      Int      @default(5) // 1-5 estrelas
+  
+  // Controle de exibição
+  isActive    Boolean  @default(true) // Se deve ser exibido na página de login
+  order       Int?     // Ordem de exibição (opcional, para controle manual)
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relações
+  user        User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@map("testimonials")
+}
+
+// ========================================
+// FASE 6B: Calendário, Turnos e Feriados
+// ========================================
+
+
+
+// Templates de Turnos (para facilitar criação de escalas)
+model ShiftTemplate {
+  id              String   @id @default(cuid())
+  companyId       String
+  company         Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  name            String
+  startTime       String   // HH:mm formato 24h
+  endTime         String   // HH:mm formato 24h
+  breakDuration   Int?     // Duração do intervalo em minutos
+  color           String   @default("#3B82F6")
+  description     String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  @@unique([companyId, name])
+  @@map("shift_templates")
+}
+
+// Feriados da Empresa
+model CompanyHoliday {
+  id              String   @id @default(cuid())
+  companyId       String
+  company         Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  name            String
+  date            DateTime
+  isRecurring     Boolean  @default(false) // Se repete anualmente
+  description     String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  @@map("company_holidays")
+}
+
+// ========================================
+// MÓDULO DE EVENTOS - FASE 1 MVP
+// ========================================
+
+// Evento principal
+model Event {
+  id                String              @id @default(cuid())
+  name              String
+  description       String?             @db.Text
+  eventType         EventType           @default(OTHER)
+  location          String?
+  eventDate         DateTime
+  endDate           DateTime?
+  status            EventStatus         @default(PLANNING)
+  companyId         String
+  createdBy         String              // ID do usuário que criou
+  budget            Float?
+  estimatedGuests   Int?
+  notes             String?             @db.Text
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+  
+  // Relações
+  collaborators     EventCollaborator[]
+  images            EventImage[]
+  chatMessages      EventChatMessage[]
+  tasks             Task[]              // Tarefas exclusivas do evento
+
+  @@map("events")
+  @@index([companyId])
+  @@index([eventDate])
+  @@index([status])
+}
+
+// Colaboradores do Evento (multi-departamento)
+model EventCollaborator {
+  id            String   @id @default(cuid())
+  eventId       String
+  userId        String
+  role          EventCollaboratorRole @default(MEMBER)
+  departmentId  String?  // Departamento do colaborador
+  canManage     Boolean  @default(false) // Pode editar evento
+  canChat       Boolean  @default(true)  // Pode usar o chat
+  joinedAt      DateTime @default(now())
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  
+  // Relações
+  event         Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([eventId, userId])
+  @@map("event_collaborators")
+  @@index([eventId])
+  @@index([userId])
+}
+
+// Imagens do Evento
+model EventImage {
+  id                 String   @id @default(cuid())
+  eventId            String
+  fileName           String
+  fileSize           Int
+  mimeType           String
+  cloud_storage_path String
+  uploadedBy         String   // ID do usuário que fez upload
+  description        String?
+  createdAt          DateTime @default(now())
+  
+  // Relações
+  event              Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  @@map("event_images")
+  @@index([eventId])
+}
+
+// Chat Exclusivo do Evento
+model EventChatMessage {
+  id              String   @id @default(cuid())
+  eventId         String
+  senderId        String
+  content         String   @db.Text
+  read            Boolean  @default(false)
+  // Campos de mídia
+  attachmentUrl   String?  // cloud_storage_path (chave S3)
+  attachmentType  String?  // image, video, audio, document
+  attachmentName  String?  // nome original do arquivo
+  attachmentSize  Int?     // tamanho em bytes
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  // Relações
+  event           Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  @@map("event_chat_messages")
+  @@index([eventId])
+  @@index([senderId])
+}
+
+// ========================================
+// SISTEMA DE PONTO ELETRÓNICO / ATTENDANCE
+// ========================================
+
+model AttendanceSettings {
+  id                      String   @id @default(cuid())
+  companyId               String   @unique
+  company                 Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  
+  // Método de registo
+  allowManagerClockIn     Boolean  @default(true)   // Gestor pode registar por outros
+  allowSelfClockIn        Boolean  @default(false)  // Colaborador pode auto-registar
+  
+  // Validação GPS
+  requireGPS              Boolean  @default(false)  // Exigir validação de localização
+  maxGPSRadiusMeters      Int      @default(100)    // Raio máximo em metros
+  companyLatitude         Float?                    // Latitude da empresa
+  companyLongitude        Float?                    // Longitude da empresa
+  
+  // Tolerância de atraso
+  lateToleranceMinutes    Int      @default(15)     // Tolerância antes de marcar atraso
+  earlyDepartureMinutes   Int      @default(15)     // Tolerância para saída antecipada
+  
+  // Notificações
+  notifyOnLate            Boolean  @default(true)   // Notificar gestores em caso de atraso
+  notifyOnAbsent          Boolean  @default(true)   // Notificar gestores em caso de falta
+  
+  createdAt               DateTime @default(now())
+  updatedAt               DateTime @updatedAt
+
+  @@map("attendance_settings")
+}
+
+model Attendance {
+  id                String             @id @default(cuid())
+  shiftAssignmentId String
+  shiftAssignment   ShiftAssignment    @relation(fields: [shiftAssignmentId], references: [id], onDelete: Cascade)
+  
+  // Horas reais
+  clockInTime       DateTime?          // Hora de entrada real
+  clockOutTime      DateTime?          // Hora de saída real
+  
+  // Localização GPS (quando clockIn/clockOut)
+  clockInLatitude   Float?
+  clockInLongitude  Float?
+  clockOutLatitude  Float?
+  clockOutLongitude Float?
+  
+  // Status
+  status            AttendanceStatus   @default(PENDING)
+  
+  // Justificações
+  notes             String?            // Notas gerais
+  justification     String?            // Justificação para falta
+  justifiedBy       String?            // ID do gestor que justificou
+  
+  // Cálculos automáticos (em minutos)
+  minutesLate       Int?               // Minutos de atraso na entrada
+  minutesEarly      Int?               // Minutos de saída antecipada
+  totalMinutes      Int?               // Total de minutos trabalhados
+  
+  // Quem registou
+  clockedInBy       String?            // ID do usuário que registou entrada (se foi gestor)
+  clockedOutBy      String?            // ID do usuário que registou saída (se foi gestor)
+  
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+  
+  @@unique([shiftAssignmentId]) // Uma presença por atribuição de turno
+  @@map("attendances")
+  @@index([status])
+  @@index([clockInTime])
+}
+
+enum AttendanceStatus {
+  PENDING              // Aguardando registo
+  PRESENT              // Presente (dentro do horário)
+  LATE                 // Atrasado
+  ABSENT_JUSTIFIED     // Falta justificada
+  ABSENT_UNJUSTIFIED   // Falta injustificada
+  HALF_DAY             // Meio período
+  EARLY_DEPARTURE      // Saída antecipada
+}
+
+// Enums para Eventos
+enum EventType {
+  WEDDING         // Casamento
+  BIRTHDAY        // Aniversário
+  CONFERENCE      // Conferência
+  CORPORATE       // Evento Corporativo
+  THEMED_PARTY    // Festa Temática
+  CONGRESS        // Congresso
+  OTHER           // Outro
+}
+
+enum EventStatus {
+  PLANNING        // Em Planejamento
+  CONFIRMED       // Confirmado
+  IN_PROGRESS     // Em Andamento
+  COMPLETED       // Concluído
+  CANCELLED       // Cancelado
+}
+
+enum EventCollaboratorRole {
+  COORDINATOR     // Coordenador do evento
+  MANAGER         // Gestor
+  MEMBER          // Membro
+  EXTERNAL        // Externo (fornecedor, etc.)
+}

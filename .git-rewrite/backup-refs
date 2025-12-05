@@ -1,0 +1,7 @@
+cef7f6781d57b5ca29cc36c5ad05f8edb65340c4 commit	refs/heads/clean-deploy
+b6fcce6d3a7f1b887ed7e0a71148e7628f8a9748 commit	refs/heads/correcoes-fase-1-2
+9970601fc212209a3ae465f2fde7777f1b572d40 commit	refs/heads/fix-vercel-deployment
+8b616ef287fb50302984ab978f04340d9c68eeb1 commit	refs/heads/main
+b2c1af087d4d82d54741d8b4ef5bd6428c7a2410 commit	refs/heads/master
+3a0e3a8ebf075c38dc142a964ebf3c4253a9c698 commit	refs/remotes/origin/clean-deploy
+3a0e3a8ebf075c38dc142a964ebf3c4253a9c698 commit	refs/remotes/origin/main
