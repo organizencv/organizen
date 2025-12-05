@@ -1,9 +1,5 @@
 
 {
-  "version": 2,
-  "buildCommand": "yarn build",
-  "devCommand": "yarn dev",
-  "installCommand": "yarn install && yarn prisma generate",
-  "framework": "nextjs",
-  "rootDirectory": "nextjs_space"
+  "buildCommand": "cd nextjs_space && yarn build",
+  "installCommand": "cd nextjs_space && yarn install && yarn prisma generate"
 }
