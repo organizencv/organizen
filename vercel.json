@@ -1,5 +1,2 @@
 
-{
-  "buildCommand": "cd nextjs_space && yarn build",
-  "installCommand": "cd nextjs_space && yarn install && yarn prisma generate"
-}
+{}
