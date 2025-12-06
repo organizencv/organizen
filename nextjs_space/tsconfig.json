@@ -38,7 +38,6 @@
     ".build/types/**/*.ts"
   ],
   "exclude": [
-    "node_modules",
-    "nextjs_space"
+    "node_modules"
   ]
 }
