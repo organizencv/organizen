@@ -194,7 +194,7 @@ export async function POST(request: NextRequest) {
       createdAt: group.createdAt.toISOString(),
       updatedAt: group.updatedAt.toISOString(),
       participants: memberships.map((m: { id: string; userId: string; role: string | null; joinedAt: Date }) => {
-        const user = members.find(u => u.id === m.userId);
+        const user = members.find((u: { id: string; name: string | null; email: string; image: string | null }) => u.id === m.userId);
         return {
           id: m.id,
           userId: m.userId,
