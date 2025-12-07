@@ -193,7 +193,7 @@ export async function POST(request: NextRequest) {
       isMuted: false,
       createdAt: group.createdAt.toISOString(),
       updatedAt: group.updatedAt.toISOString(),
-      participants: memberships.map(m => {
+      participants: memberships.map((m: { id: string; userId: string; role: string | null; joinedAt: Date }) => {
         const user = members.find(u => u.id === m.userId);
         return {
           id: m.id,
