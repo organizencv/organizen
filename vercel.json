@@ -1,2 +1,4 @@
 
-{}
+{
+  "buildCommand": "cd nextjs_space && yarn prisma generate && yarn prisma migrate deploy && yarn build"
+}
