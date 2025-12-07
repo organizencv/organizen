@@ -39,7 +39,7 @@ export async function GET(request: NextRequest) {
       });
 
       // Buscar dados dos remetentes
-      const senderIds = [...new Set(rawMessages.map(m => m.senderId))];
+      const senderIds = [...new Set(rawMessages.map((m: { senderId: string }) => m.senderId))];
       const senders = await prisma.user.findMany({
         where: {
           id: { in: senderIds }
@@ -77,7 +77,7 @@ export async function GET(request: NextRequest) {
       });
 
       // Buscar dados dos remetentes
-      const senderIds = [...new Set(rawMessages.map(m => m.senderId))];
+      const senderIds = [...new Set(rawMessages.map((m: { senderId: string }) => m.senderId))];
       const senders = await prisma.user.findMany({
         where: {
           id: { in: senderIds }
