@@ -51,7 +51,7 @@ export async function GET(request: NextRequest) {
         }
       });
 
-      const senderMap = new Map(senders.map(s => [s.id, s]));
+      const senderMap = new Map(senders.map((s: { id: string; name: string; image: string | null }) => [s.id, s]));
 
       messages = rawMessages.map(msg => ({
         ...msg,
@@ -89,7 +89,7 @@ export async function GET(request: NextRequest) {
         }
       });
 
-      const senderMap = new Map(senders.map(s => [s.id, s]));
+      const senderMap = new Map(senders.map((s: { id: string; name: string; image: string | null }) => [s.id, s]));
 
       messages = rawMessages.map(msg => ({
         ...msg,
