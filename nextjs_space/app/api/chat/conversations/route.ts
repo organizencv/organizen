@@ -71,7 +71,7 @@ export async function GET(request: NextRequest) {
     });
 
     // Convert enum to string for proper serialization
-    const users = usersData.map(user => ({
+    const users = usersData.map((user: { id: string; name: string | null; email: string; image: string | null; role: string }) => ({
       id: user.id,
       name: user.name,
       email: user.email,
