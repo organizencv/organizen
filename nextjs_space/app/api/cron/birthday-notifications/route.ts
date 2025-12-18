@@ -42,7 +42,7 @@ export async function GET(request: NextRequest) {
     });
 
     // Filtrar usuários que fazem aniversário hoje
-    const todayBirthdays = birthdayUsers.filter(user => {
+    const todayBirthdays = birthdayUsers.filter((user: any) => {
       if (!user.birthDate) return false;
       const birthDate = new Date(user.birthDate);
       return birthDate.getMonth() + 1 === todayMonth && birthDate.getDate() === todayDay;
@@ -122,7 +122,7 @@ export async function GET(request: NextRequest) {
             },
             select: { id: true }
           });
-          recipients.push(...managers.map(m => m.id));
+          recipients.push(...managers.map((m: { id: string }) => m.id));
         }
 
         // 3. Notificar membros da equipe
@@ -134,7 +134,7 @@ export async function GET(request: NextRequest) {
             },
             select: { id: true }
           });
-          recipients.push(...teamMembers.map(m => m.id));
+          recipients.push(...teamMembers.map((m: { id: string }) => m.id));
         }
 
         // Remover duplicatas
@@ -195,7 +195,7 @@ export async function GET(request: NextRequest) {
       birthdaysFound: todayBirthdays.length,
       notificationsSent,
       errors,
-      details: await Promise.all(todayBirthdays.map(async (u) => {
+      details: await Promise.all(todayBirthdays.map(async (u: any) => {
         const team = u.teamId ? await prisma.team.findUnique({
           where: { id: u.teamId },
           include: { department: true }
