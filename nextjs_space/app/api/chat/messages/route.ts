@@ -53,7 +53,7 @@ export async function GET(request: NextRequest) {
 
       const senderMap = new Map(senders.map((s: { id: string; name: string; image: string | null }) => [s.id, s]));
 
-      messages = rawMessages.map(msg => ({
+      messages = rawMessages.map((msg: any) => ({
         ...msg,
         sender: senderMap.get(msg.senderId) || { id: msg.senderId, name: 'Unknown', image: null }
       }));
@@ -91,7 +91,7 @@ export async function GET(request: NextRequest) {
 
       const senderMap = new Map(senders.map((s: { id: string; name: string; image: string | null }) => [s.id, s]));
 
-      messages = rawMessages.map(msg => ({
+      messages = rawMessages.map((msg: any) => ({
         ...msg,
         sender: senderMap.get(msg.senderId) || { id: msg.senderId, name: 'Unknown', image: null }
       }));
